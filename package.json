@@ -1,7 +1,7 @@
 {
-  "name": "tetron",
+  "name": "webtris",
   "version": "0.0.1",
-  "description": "Tetris as an electron application!",
+  "description": "Tetris as a web application!",
   "main": "main.js",
   "scripts": {
     "build": "rimraf build && webpack",

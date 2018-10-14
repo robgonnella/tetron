@@ -1,5 +1,9 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import Tetron from '../components/tetron';
+import Webtris from '../components/webtris';
 
-ReactDOM.render(<Tetron />, document.getElementById('mount-point'));
+const props = { blockWidth: 20 };
+ReactDOM.render(
+  <Webtris { ...props }/>,
+  document.getElementById('mount-point')
+);
