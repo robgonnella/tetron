@@ -1,8 +1,16 @@
 import { Color, GamePiece, Rotation } from './types';
 import { L, ReverseL, Zig, Zag, Line, Block, T } from './game-pieces';
 
-export type Board = Array<Array<0|Color>>;
-type ChangeCallback = (b: Board) => void;
+type Board = Array<Array<0|Color>>;
+export interface ITetrisData {
+  board: Board;
+  level: number;
+  score: number;
+  nextPiece: Array<number[]>;
+  nextColor: Color;
+}
+
+type ChangeCallback = (b: ITetrisData) => void;
 
 function generateCleanBoard(): Board {
   let board = [];
@@ -22,6 +30,8 @@ function isColor(a: any): a is Color {
 
 export default class TetrisEngine {
   public readonly board: Board = generateCleanBoard();
+  public level: number = 1;
+  public score: number = 0;
   public paused: boolean = false;
   private onChange?: ChangeCallback;
   private gamePieces: GamePiece[] = [ L, ReverseL, Zig, Zag, Line, Block, T ];
@@ -29,7 +39,6 @@ export default class TetrisEngine {
   private rotation: Rotation[] = [0, 90, 180, 270];
   private currentPiece: GamePiece;
   private nextPiece: GamePiece;
-  private level: number = 1
   private loopSpeed: number = 1000;
   private loopInterval?: NodeJS.Timer;
 
@@ -49,20 +58,38 @@ export default class TetrisEngine {
     }, this.loopSpeed);
   }
 
+  public readonly playAgain = (): TetrisEngine => {
+    const engine = new TetrisEngine();
+    engine.run();
+    return engine;
+  }
+
   public readonly togglePause = (): void => {
     if (this.loopInterval) {
       clearInterval(this.loopInterval);
       this.loopInterval = undefined
       this.paused = true;
-      if (this.onChange) { this.onChange(cleanBoard); }
+      const data = this.getData();
+      data.board = cleanBoard;
+      if (this.onChange) { this.onChange(data); }
     } else {
       this.paused = false;
       this.run();
     }
   }
 
-  public setChangeHandler = (cb: ChangeCallback): void => {
+  public readonly setChangeHandler = (cb: ChangeCallback): void => {
     this.onChange = cb;
+  }
+
+  public readonly getData = (): ITetrisData => {
+    return {
+      board: this.board,
+      level: this.level,
+      score: this.score,
+      nextPiece: this.nextPiece.shape[this.nextPiece.rotation],
+      nextColor: this.nextPiece.color
+    };
   }
 
   public readonly moveDown = (): void => {
@@ -172,7 +199,7 @@ export default class TetrisEngine {
       }
     }
     if (this.onChange && typeof this.onChange === 'function') {
-      this.onChange(board);
+      this.onChange(this.getData());
     }
   }
 
@@ -355,6 +382,7 @@ export default class TetrisEngine {
       this.board.unshift(Array(10).fill(0));
     }
 
-      if (this.onChange) { this.onChange(this.board); }
+      if (this.onChange) { this.onChange(this.getData()); }
   }
+
 }

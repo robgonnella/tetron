@@ -10,7 +10,7 @@ const mainView = path.join(__dirname, 'index.html');
 function createWindow (): void {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 200,
+    width: 400,
     height: 440,
     useContentSize: true,
     resizable: false
