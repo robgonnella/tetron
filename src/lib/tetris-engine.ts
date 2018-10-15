@@ -6,6 +6,7 @@ export interface ITetrisData {
   board: Board;
   level: number;
   score: number;
+  gameover: boolean;
   nextPiece: Array<number[]>;
   nextColor: Color;
 }
@@ -41,6 +42,7 @@ export default class TetrisEngine {
   public score: number = 0;
   public clearedLines: number = 0;
   public paused: boolean = false;
+  public gameover: boolean = false;
   private levelUpIn: number = 10;
   private onChange?: ChangeCallback;
   private gamePieces: GamePiece[] = [ L, ReverseL, Zig, Zag, Line, Block, T ];
@@ -49,7 +51,7 @@ export default class TetrisEngine {
   private currentPiece: GamePiece;
   private nextPiece: GamePiece;
   private loopSpeed: number = 1000;
-  private loopInterval?: NodeJS.Timer;
+  private loopTimeout?: NodeJS.Timer;
 
   constructor() {
     this.currentPiece = this.getRandomPiece();
@@ -58,26 +60,31 @@ export default class TetrisEngine {
 
   public readonly run = (): void => {
     this.renderCurrentPiece();
-    this.loopInterval = setTimeout(() => {
+    this.loopTimeout = setTimeout(() => {
       if (this.isGameOver()) {
         this.stopGame();
       } else {
         this.moveDown();
+        this.run();
       }
-      this.run();
     }, this.loopSpeed);
   }
 
   public readonly playAgain = (): TetrisEngine => {
     const engine = new TetrisEngine();
-    engine.run();
+    if (this.onChange) {
+      engine.setChangeHandler(this.onChange)
+      if (engine.onChange) {
+        engine.onChange(engine.getData());
+      }
+    }
     return engine;
   }
 
   public readonly togglePause = (): void => {
-    if (this.loopInterval) {
-      clearInterval(this.loopInterval);
-      this.loopInterval = undefined
+    if (this.loopTimeout) {
+      clearTimeout(this.loopTimeout);
+      this.loopTimeout = undefined
       this.paused = true;
       const data = this.getData();
       data.board = cleanBoard;
@@ -97,6 +104,7 @@ export default class TetrisEngine {
       board: this.board,
       level: this.level,
       score: this.score,
+      gameover: this.gameover,
       nextPiece: this.nextPiece.shape[this.nextPiece.rotation],
       nextColor: this.nextPiece.color
     };
@@ -104,6 +112,7 @@ export default class TetrisEngine {
 
   public readonly moveDown = (): void => {
     if (this.paused) { return; }
+    if (this.gameover) { return; }
     if (this.isHit()) { return this.renderNextPiece(); }
     this.clearCurrentPiece();
     ++this.currentPiece.rowPos;
@@ -119,6 +128,7 @@ export default class TetrisEngine {
 
   public readonly moveLeft = () => {
     if (this.paused) { return; }
+    if (this.gameover) { return; }
     if (!this.canMoveLeft()) { return; }
     if (this.isAgainstWallOnLeft()) { return; }
     this.clearCurrentPiece();
@@ -128,6 +138,7 @@ export default class TetrisEngine {
 
   public readonly moveRight = () => {
     if (this.paused) { return; }
+    if (this.gameover) { return; }
     if (!this.canMoveRight()) { return; }
     if (this.isAgainstWallOnRight()) { return; }
     this.clearCurrentPiece();
@@ -137,6 +148,7 @@ export default class TetrisEngine {
 
   public readonly rotateLeft = (): void => {
     if (this.paused) { return; }
+    if (this.gameover) { return; }
     let wall: string = '';
     if (this.isAgainstWallOnLeft()) { wall = 'left'; }
     if (this.isAgainstWallOnRight()) { wall = 'right'; }
@@ -150,6 +162,7 @@ export default class TetrisEngine {
 
   public readonly rotateRight = () => {
     if (this.paused) { return; }
+    if (this.gameover) { return; }
     let wall: string = ''
     if (this.isAgainstWallOnLeft()) { wall = 'left'; }
     if (this.isAgainstWallOnRight()) { wall = 'right'; }
@@ -329,6 +342,7 @@ export default class TetrisEngine {
 
   private readonly isGameOver = (): boolean => {
     if (this.isHit() && this.currentPiece.rowPos <= 0) {
+      this.gameover = true;
       return true;
     } else {
       return false;
@@ -336,10 +350,12 @@ export default class TetrisEngine {
   }
 
   private stopGame = () => {
-    if (this.loopInterval) {
-      clearTimeout(this.loopInterval);
-      this.loopInterval = undefined;
+    this.gameover = true;
+    if (this.loopTimeout) {
+      clearTimeout(this.loopTimeout);
+      this.loopTimeout = undefined;
     }
+    if (this.onChange) { this.onChange(this.getData()); }
     console.log('Game Over Man!!!');
   }
 

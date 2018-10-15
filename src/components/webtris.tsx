@@ -117,6 +117,7 @@ export default class Webtris extends React.Component<
         >
           Level: {this.state.tetris.level}<br/><br/>
           Score: {this.state.tetris.score}<br/><br/>
+          {this.renderGameOver()}
           <canvas
             id='side-car-canvas'
             width={this.state.tetris.nextPiece[0].length * 2 * this.state.blockWidth}
@@ -132,7 +133,24 @@ export default class Webtris extends React.Component<
     this.setState({tetris});
   }
 
-  private drawNextPiece = () => {
+  private readonly renderGameOver = (): JSX.Element | null => {
+    if (!this.state.tetris.gameover) { return null; }
+    return (
+      <div>
+        <h3>Game Over!!</h3>
+        <button onClick={this.playAgain}>
+          Play Again
+        </button>
+      </div>
+    );
+  }
+
+  private readonly playAgain = (): void => {
+    this.tetrisEngine = this.tetrisEngine.playAgain();
+    this.tetrisEngine.run();
+  }
+
+  private readonly drawNextPiece = () => {
     if (!this.ctx2) { return; }
     if (!this.canvas2) { return; }
     this.ctx2.clearRect(0, 0, this.canvas2.width, this.canvas2.height);
@@ -159,7 +177,7 @@ export default class Webtris extends React.Component<
     }
   }
 
-  private drawBoard = () => {
+  private readonly drawBoard = () => {
     if (!this.ctx) { return; }
     if (!this.canvas) { return; }
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
