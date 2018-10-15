@@ -23,6 +23,13 @@ function generateCleanBoard(): Board {
 const fullRowFlash = Array(10).fill('grey');
 const cleanBoard = generateCleanBoard();
 const colors = ['red', 'blue', 'green', 'cyan', 'magenta', 'yellow'];
+const MULTIPLIERS = {
+  0: 0,
+  1: 40,
+  2: 100,
+  3: 300,
+  4: 1200
+}
 
 function isColor(a: any): a is Color {
   return typeof a === 'string' && colors.includes(a);
@@ -30,9 +37,11 @@ function isColor(a: any): a is Color {
 
 export default class TetrisEngine {
   public readonly board: Board = generateCleanBoard();
-  public level: number = 1;
+  public level: number = 0;
   public score: number = 0;
+  public clearedLines: number = 0;
   public paused: boolean = false;
+  private levelUpIn: number = 10;
   private onChange?: ChangeCallback;
   private gamePieces: GamePiece[] = [ L, ReverseL, Zig, Zag, Line, Block, T ];
   private colors: Color[] = colors as Color[];
@@ -49,12 +58,13 @@ export default class TetrisEngine {
 
   public readonly run = (): void => {
     this.renderCurrentPiece();
-    this.loopInterval = setInterval(() => {
+    this.loopInterval = setTimeout(() => {
       if (this.isGameOver()) {
         this.stopGame();
       } else {
         this.moveDown();
       }
+      this.run();
     }, this.loopSpeed);
   }
 
@@ -327,7 +337,7 @@ export default class TetrisEngine {
 
   private stopGame = () => {
     if (this.loopInterval) {
-      clearInterval(this.loopInterval);
+      clearTimeout(this.loopInterval);
       this.loopInterval = undefined;
     }
     console.log('Game Over Man!!!');
@@ -367,22 +377,33 @@ export default class TetrisEngine {
     return false;
   }
 
+  private computeStats = (newlyClearedLines: 0 | 1 | 2| 3 | 4) => {
+    this.clearedLines += newlyClearedLines;
+    if (newlyClearedLines >= this.levelUpIn) {
+      this.level++;
+      this.levelUpIn = 10 - Math.floor(newlyClearedLines / this.levelUpIn);
+      this.loopSpeed *= .75;
+    } else {
+      this.levelUpIn -= newlyClearedLines;
+    }
+    const mult: number = MULTIPLIERS[newlyClearedLines];
+    this.score += mult * (this.level + 1)
+  }
+
   private readonly clearLines = (): void => {
-    let indecesToReplace: number[] = [];
+    let numClearedLines = 0;
     for (let i = 0; i < this.board.length; ++i) {
       const row = this.board[i];
       if (row.every((e) => e !== 0)) {
-        indecesToReplace.push(i);
-        this.board[i] = fullRowFlash;
+        ++numClearedLines;
+        // @todo: show flash on row when clearing lines
+        // this.board[i] = fullRowFlash;
+        this.board.splice(i, 1);
+        this.board.unshift(Array(10).fill(0));
       }
     }
-
-    for (let i = 0; i < indecesToReplace.length; ++i) {
-      this.board.splice(indecesToReplace[i], 1);
-      this.board.unshift(Array(10).fill(0));
-    }
-
-      if (this.onChange) { this.onChange(this.getData()); }
+    this.computeStats(numClearedLines as 0 | 1 | 2 | 3 | 4);
+    if (this.onChange) { this.onChange(this.getData()); }
   }
 
 }
