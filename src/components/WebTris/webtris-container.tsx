@@ -1,5 +1,6 @@
 import * as React from 'react';
-import TetrisEngine, { TetrisState } from '../lib/tetris-engine';
+import { Webtris } from './webtris';
+import TetrisEngine, { TetrisState } from '../../lib/tetris-engine';
 
 interface WebtrisState {
   tetris: TetrisState;
@@ -12,7 +13,7 @@ interface WebtrisProps {
   blockWidth?: number
 }
 
-export default class Webtris extends React.Component<
+export default class WebtrisContainer extends React.Component<
   WebtrisProps,
   WebtrisState
 > {
@@ -103,118 +104,23 @@ export default class Webtris extends React.Component<
   }
 
   public render() {
-    return (
-      <div
-        className='tetris-container'
-        style={{
-          backgroundImage: 'url(./images/tetris-background.png)',
-          width: '100vw',
-          height: '100vh',
-          textAlign: 'center',
-          color: 'white',
-          verticalAlign: 'top',
-          paddingTop: this.state.blockWidth * 4
-        }}
-      >
-        <div
-          className='side-car-left'
-          style={{
-            display: 'inline-block',
-            borderRight: '3px solid black',
-            width: this.state.canvasWidth,
-            height: this.state.canvasHeight,
-            border: '1px solid red',
-            marginRight: '25px',
-            verticalAlign: 'top',
-            backgroundColor: 'midnightblue'
-          }}
-        >
-          <canvas
-            id='stats-canvas'
-            width={this.state.canvasWidth/2}
-            height={this.state.canvasHeight}
-            style={{
-              marginTop: this.state.blockWidth + (this.state.blockWidth / 2)
-            }}
-          />
-          <div
-            className='stats-numbers'
-            style={{
-              display: 'inline-block',
-              fontSize: 20,
-              color: 'grey',
-              verticalAlign: 'top',
-              width: this.state.canvasWidth / 4,
-              height: this.state.canvasHeight,
-              marginTop: this.state.blockWidth
-            }}
-          >
-            <div style={{padding: 17.5}}>{this.state.tetris.stats.T.stats}</div>
-            <div style={{padding: 17.5}}>{this.state.tetris.stats.L.stats}</div>
-            <div style={{padding: 17.5}}>{this.state.tetris.stats.RL.stats}</div>
-            <div style={{padding: 17.5}}>{this.state.tetris.stats.Zig.stats}</div>
-            <div style={{padding: 17.5}}>{ this.state.tetris.stats.Zag.stats }</div>
-            <div style={{padding: 17.5}}>{ this.state.tetris.stats.Line.stats }</div>
-            <div style={{padding: 17.5}}>{ this.state.tetris.stats.Block.stats }</div>
-          </div>
-        </div>
-        <canvas
-          id='board-canvas'
-          style={{
-            display: 'inline-block',
-            border: '1px solid red',
-            marginRight: '25px',
-            verticalAlign: 'top',
-            backgroundColor: 'midnightblue'
-          }}
-          width={this.state.canvasWidth}
-          height={this.state.canvasHeight}
-        />
-        <div
-          className='side-car-right'
-          style={{
-            display: 'inline-block',
-            width: this.state.canvasWidth,
-            height: this.state.canvasHeight,
-            border: '1px solid red',
-            verticalAlign: 'top',
-            backgroundColor: 'midnightblue'
-          }}
-        >
-          <div
-            style={{
-              marginTop: this.state.canvasHeight / 4
-            }}
-          >
-            Level: {this.state.tetris.level}<br/><br/>
-            Score: {this.state.tetris.score}<br/><br/>
-            {this.renderGameOver()}
-          </div>
-          <canvas
-            id='next-canvas'
-            width={this.state.tetris.nextPiece[0].length * 2 * this.state.blockWidth}
-            height={this.state.tetris.nextPiece.length * 2 * this.state.blockWidth}
-            style={{marginTop: 25, border: '1px solid red'}}
-          />
-        </div>
-      </div>
-    );
+    const props = {
+      blockWidth: this.state.blockWidth,
+      canvasWidth: this.state.canvasWidth,
+      canvasHeight: this.state.canvasHeight,
+      playAgain: this.playAgain,
+      gameover: this.state.tetris.gameover,
+      stats: this.state.tetris.stats,
+      level: this.state.tetris.level,
+      score: this.state.tetris.score,
+      clearedLines: this.state.tetris.clearedLines,
+      nextPiece: this.state.tetris.nextPiece
+    }
+    return <Webtris {...props} />;
   }
 
   private handleTetrisStateChange = (tetris: TetrisState): void => {
     this.setState({tetris});
-  }
-
-  private readonly renderGameOver = (): JSX.Element | null => {
-    if (!this.state.tetris.gameover) { return null; }
-    return (
-      <div>
-        <h3>Game Over!!</h3>
-        <button onClick={this.playAgain}>
-          Play Again
-        </button>
-      </div>
-    );
   }
 
   private readonly playAgain = (): void => {
@@ -227,7 +133,6 @@ export default class Webtris extends React.Component<
     if (!this.statsCanvas) { return; }
     this.statsCtx.font = "20px Georgia";
     const blockWidth = this.state.blockWidth;
-    const textX = (this.statsCanvas.width / 2) + blockWidth;
     const w = blockWidth;
     const h = blockWidth;
     let topOffset = 0;
@@ -239,7 +144,7 @@ export default class Webtris extends React.Component<
           if (piece.shape[i][j] !== 0) {
             const y = (this.state.blockWidth * i) + topOffset;
             const x = (this.state.blockWidth * j) + this.state.blockWidth;
-            this.statsCtx.fillStyle = 'grey';
+            this.statsCtx.fillStyle = piece.color;
             this.statsCtx.strokeStyle = 'black';
             this.statsCtx.lineWidth = 2;
             this.statsCtx.fillRect(x, y, w, h);

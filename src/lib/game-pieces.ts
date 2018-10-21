@@ -28,7 +28,7 @@ export const L: GamePiece = {
   color: 'magenta'
 }
 
-export const ReverseL: GamePiece = {
+export const RL: GamePiece = {
   type: 'RL',
   shape: {
     0: [
@@ -191,5 +191,5 @@ export const T: GamePiece = {
   rotation: 0,
   rowPos: 0,
   colPos: 4,
-  color: 'red'
+  color: 'purple'
 }

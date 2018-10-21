@@ -1,11 +1,12 @@
 import { Color, GamePiece, Rotation } from './types';
-import { L, ReverseL, Zig, Zag, Line, Block, T } from './game-pieces';
+import { L, RL, Zig, Zag, Line, Block, T } from './game-pieces';
 
 type Board = Array<Array<0|Color>>;
 export interface TetrisState {
   board: Board;
   level: number;
   score: number;
+  clearedLines: number;
   gameover: boolean;
   nextPiece: Array<number[]>;
   nextColor: Color;
@@ -16,30 +17,37 @@ interface Stats {
   T: {
     shape: GamePiece['shape']['0'];
     stats: number;
+    color: Color;
   },
   L: {
     shape: GamePiece['shape']['90'];
     stats: number;
+    color: Color;
   },
   RL: {
     shape: GamePiece['shape']['90'];
     stats: number;
+    color: Color;
   },
   Zig: {
     shape: GamePiece['shape']['0'];
     stats: number;
+    color: Color;
   },
   Zag: {
     shape: GamePiece['shape']['0'];
     stats: number;
+    color: Color;
   },
   Line: {
     shape: GamePiece['shape']['90'];
     stats: number;
+    color: Color;
   },
   Block: {
     shape: GamePiece['shape']['0'];
     stats: number;
+    color: Color;
   }
 }
 
@@ -54,7 +62,15 @@ function generateCleanBoard(): Board {
 }
 
 const cleanBoard = generateCleanBoard();
-const colors = ['red', 'blue', 'green', 'cyan', 'magenta', 'yellow'];
+const colors: Color[] = [
+  'red',
+  'blue',
+  'green',
+  'cyan',
+  'magenta',
+  'yellow',
+  'purple'
+];
 const MULTIPLIERS = {
   0: 0,
   1: 40,
@@ -64,8 +80,28 @@ const MULTIPLIERS = {
 }
 
 function isColor(a: any): a is Color {
-  return typeof a === 'string' && colors.includes(a);
+  return typeof a === 'string' && colors.includes(a as Color);
 }
+
+const gameMusic = new Audio();
+gameMusic.autoplay = false;
+gameMusic.src = 'audio/tetris_a_type.mp3';
+
+const rotateSound = new Audio();
+rotateSound.autoplay = false;
+rotateSound.src = 'audio/block-rotate.mp3';
+
+const lineRemovalSound = new Audio();
+lineRemovalSound.autoplay = false;
+lineRemovalSound.src = 'audio/line-remove.mp3';
+
+const lineRemoval4Sound = new Audio();
+lineRemoval4Sound.autoplay = false;
+lineRemoval4Sound.src = 'audio/line-removal4.mp3';
+
+const hitSound = new Audio();
+hitSound.autoplay = false;
+hitSound.src = 'audio/slow-hit.mp3';
 
 export default class TetrisEngine {
 
@@ -76,24 +112,25 @@ export default class TetrisEngine {
   public paused: boolean = false;
   public gameover: boolean = false;
   public stats: Stats = {
-    T: { shape: T.shape['0'], stats: 0},
-    L: { shape: L.shape['90'], stats: 0},
-    RL: { shape: ReverseL.shape['90'], stats: 0},
-    Zig: { shape: Zig.shape['0'], stats: 0},
-    Zag: { shape: Zag.shape['0'], stats: 0},
-    Line: { shape: Line.shape['90'], stats: 0},
-    Block: { shape: Block.shape['0'], stats: 0}
+    T: { shape: T.shape['0'], stats: 0, color: T.color},
+    L: { shape: L.shape['90'], stats: 0, color: L.color},
+    RL: { shape: RL.shape['90'], stats: 0, color: RL.color},
+    Zig: { shape: Zig.shape['0'], stats: 0, color: Zig.color},
+    Zag: { shape: Zag.shape['0'], stats: 0, color: Zag.color},
+    Line: { shape: Line.shape['90'], stats: 0, color: Line.color},
+    Block: { shape: Block.shape['0'], stats: 0, color: Block.color}
   };
 
   private levelUpIn: number = 10;
   private onChange?: ChangeCallback;
-  private gamePieces: GamePiece[] = [ L, ReverseL, Zig, Zag, Line, Block, T ];
+  private gamePieces: GamePiece[] = [ L, RL, Zig, Zag, Line, Block, T ];
   private colors: Color[] = colors as Color[];
   private rotation: Rotation[] = [0, 90, 180, 270];
   private currentPiece: GamePiece;
   private nextPiece: GamePiece;
-  private loopSpeed: number = 500;
-  private loopTimeout?: NodeJS.Timer;
+  private loopSpeed: number = 1000;
+  private loopTimeout?: number;
+  private playingAudio: boolean = false;
 
   constructor() {
     this.currentPiece = this.getRandomPiece();
@@ -102,8 +139,13 @@ export default class TetrisEngine {
   }
 
   public readonly run = (): void => {
+    if (!this.playingAudio) {
+      console.log('starting audio playback');
+      gameMusic.play();
+      this.playingAudio = true;
+    }
     this.renderCurrentPiece();
-    this.loopTimeout = setTimeout(() => {
+    this.loopTimeout = window.setTimeout(() => {
       if (this.isGameOver()) {
         this.stopGame();
       } else {
@@ -132,11 +174,15 @@ export default class TetrisEngine {
       clearTimeout(this.loopTimeout);
       this.loopTimeout = undefined
       this.paused = true;
+      gameMusic.pause();
+      this.playingAudio = false;
       const data = this.getState();
       data.board = cleanBoard;
       if (this.onChange) { this.onChange(data); }
     } else {
       this.paused = false;
+      gameMusic.play();
+      this.playingAudio = true;
       this.run();
     }
   }
@@ -150,6 +196,7 @@ export default class TetrisEngine {
       board: this.board,
       level: this.level,
       score: this.score,
+      clearedLines: this.clearedLines,
       gameover: this.gameover,
       nextPiece: this.nextPiece.shape[this.nextPiece.rotation],
       nextColor: this.nextPiece.color,
@@ -204,6 +251,7 @@ export default class TetrisEngine {
     this.clearCurrentPiece();
     this.currentPiece.rotation = nextRotation;
     this.updateColPosForWallPostions(wall);
+    rotateSound.play();
     this.renderCurrentPiece();
   }
 
@@ -218,6 +266,7 @@ export default class TetrisEngine {
     this.clearCurrentPiece();
     this.currentPiece.rotation = nextRotation;
     this.updateColPosForWallPostions(wall);
+    rotateSound.play();
     this.renderCurrentPiece();
   }
 
@@ -403,8 +452,11 @@ export default class TetrisEngine {
       clearTimeout(this.loopTimeout);
       this.loopTimeout = undefined;
     }
+    if (this.playingAudio) {
+      gameMusic.pause();
+      this.playingAudio = false;
+    }
     if (this.onChange) { this.onChange(this.getState()); }
-    console.log('Game Over Man!!!');
   }
 
   private readonly isHit = (): boolean => {
@@ -417,6 +469,7 @@ export default class TetrisEngine {
     const bottomPos = piece.rowPos + shape.length - 1;
 
     if (bottomPos === this.board.length - 1) {
+      hitSound.play();
       this.clearLines();
       return true;
     }
@@ -432,6 +485,7 @@ export default class TetrisEngine {
           this.board[boardRow] && this.board[boardRow][boardCol]
         );
         if (shapeValue && !bockIsPartOfShape && boardValue) {
+          hitSound.play();
           this.clearLines();
           return true;
         }
@@ -466,6 +520,12 @@ export default class TetrisEngine {
         this.board.unshift(Array(10).fill(0));
       }
     }
+    if (numClearedLines === 4) {
+      lineRemoval4Sound.play();
+    } else if (numClearedLines > 0) {
+      lineRemovalSound.play();
+    }
+
     this.computeStats(numClearedLines as 0 | 1 | 2 | 3 | 4);
     if (this.onChange) { this.onChange(this.getState()); }
   }

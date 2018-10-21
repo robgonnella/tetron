@@ -1,5 +1,6 @@
 export type NumberVector = Array<number[]>;
-export type Color = 'red' | 'cyan' | 'magenta' | 'blue' | 'yellow' | 'green';
+export type Color =
+  'red' | 'cyan' | 'magenta' | 'blue' | 'yellow' | 'green' | 'purple';
 
 export interface GamePiece {
   shape: {
