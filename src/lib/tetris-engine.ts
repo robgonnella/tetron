@@ -2,16 +2,48 @@ import { Color, GamePiece, Rotation } from './types';
 import { L, ReverseL, Zig, Zag, Line, Block, T } from './game-pieces';
 
 type Board = Array<Array<0|Color>>;
-export interface ITetrisData {
+export interface TetrisState {
   board: Board;
   level: number;
   score: number;
   gameover: boolean;
   nextPiece: Array<number[]>;
   nextColor: Color;
+  stats: Stats;
 }
 
-type ChangeCallback = (b: ITetrisData) => void;
+interface Stats {
+  T: {
+    shape: GamePiece['shape']['0'];
+    stats: number;
+  },
+  L: {
+    shape: GamePiece['shape']['90'];
+    stats: number;
+  },
+  RL: {
+    shape: GamePiece['shape']['90'];
+    stats: number;
+  },
+  Zig: {
+    shape: GamePiece['shape']['0'];
+    stats: number;
+  },
+  Zag: {
+    shape: GamePiece['shape']['0'];
+    stats: number;
+  },
+  Line: {
+    shape: GamePiece['shape']['90'];
+    stats: number;
+  },
+  Block: {
+    shape: GamePiece['shape']['0'];
+    stats: number;
+  }
+}
+
+type ChangeCallback = (b: TetrisState) => void;
 
 function generateCleanBoard(): Board {
   let board = [];
@@ -21,7 +53,6 @@ function generateCleanBoard(): Board {
   return board;
 }
 
-const fullRowFlash = Array(10).fill('grey');
 const cleanBoard = generateCleanBoard();
 const colors = ['red', 'blue', 'green', 'cyan', 'magenta', 'yellow'];
 const MULTIPLIERS = {
@@ -37,12 +68,23 @@ function isColor(a: any): a is Color {
 }
 
 export default class TetrisEngine {
+
   public readonly board: Board = generateCleanBoard();
   public level: number = 0;
   public score: number = 0;
   public clearedLines: number = 0;
   public paused: boolean = false;
   public gameover: boolean = false;
+  public stats: Stats = {
+    T: { shape: T.shape['0'], stats: 0},
+    L: { shape: L.shape['90'], stats: 0},
+    RL: { shape: ReverseL.shape['90'], stats: 0},
+    Zig: { shape: Zig.shape['0'], stats: 0},
+    Zag: { shape: Zag.shape['0'], stats: 0},
+    Line: { shape: Line.shape['90'], stats: 0},
+    Block: { shape: Block.shape['0'], stats: 0}
+  };
+
   private levelUpIn: number = 10;
   private onChange?: ChangeCallback;
   private gamePieces: GamePiece[] = [ L, ReverseL, Zig, Zag, Line, Block, T ];
@@ -50,11 +92,12 @@ export default class TetrisEngine {
   private rotation: Rotation[] = [0, 90, 180, 270];
   private currentPiece: GamePiece;
   private nextPiece: GamePiece;
-  private loopSpeed: number = 1000;
+  private loopSpeed: number = 500;
   private loopTimeout?: NodeJS.Timer;
 
   constructor() {
     this.currentPiece = this.getRandomPiece();
+    this.stats[this.currentPiece.type].stats++
     this.nextPiece = this.getRandomPiece();
   }
 
@@ -64,6 +107,9 @@ export default class TetrisEngine {
       if (this.isGameOver()) {
         this.stopGame();
       } else {
+        const shape = this.currentPiece.shape[this.currentPiece.rotation];
+        // points for soft dropping
+        this.score += shape.length;
         this.moveDown();
         this.run();
       }
@@ -75,7 +121,7 @@ export default class TetrisEngine {
     if (this.onChange) {
       engine.setChangeHandler(this.onChange)
       if (engine.onChange) {
-        engine.onChange(engine.getData());
+        engine.onChange(engine.getState());
       }
     }
     return engine;
@@ -86,7 +132,7 @@ export default class TetrisEngine {
       clearTimeout(this.loopTimeout);
       this.loopTimeout = undefined
       this.paused = true;
-      const data = this.getData();
+      const data = this.getState();
       data.board = cleanBoard;
       if (this.onChange) { this.onChange(data); }
     } else {
@@ -99,14 +145,15 @@ export default class TetrisEngine {
     this.onChange = cb;
   }
 
-  public readonly getData = (): ITetrisData => {
+  public readonly getState = (): TetrisState => {
     return {
       board: this.board,
       level: this.level,
       score: this.score,
       gameover: this.gameover,
       nextPiece: this.nextPiece.shape[this.nextPiece.rotation],
-      nextColor: this.nextPiece.color
+      nextColor: this.nextPiece.color,
+      stats: this.stats
     };
   }
 
@@ -222,12 +269,13 @@ export default class TetrisEngine {
       }
     }
     if (this.onChange && typeof this.onChange === 'function') {
-      this.onChange(this.getData());
+      this.onChange(this.getState());
     }
   }
 
   private readonly renderNextPiece = (): void => {
     this.currentPiece = this.nextPiece;
+    this.stats[this.currentPiece.type].stats++
     this.nextPiece = this.getRandomPiece();
     this.renderCurrentPiece();
   }
@@ -355,7 +403,7 @@ export default class TetrisEngine {
       clearTimeout(this.loopTimeout);
       this.loopTimeout = undefined;
     }
-    if (this.onChange) { this.onChange(this.getData()); }
+    if (this.onChange) { this.onChange(this.getState()); }
     console.log('Game Over Man!!!');
   }
 
@@ -419,7 +467,7 @@ export default class TetrisEngine {
       }
     }
     this.computeStats(numClearedLines as 0 | 1 | 2 | 3 | 4);
-    if (this.onChange) { this.onChange(this.getData()); }
+    if (this.onChange) { this.onChange(this.getState()); }
   }
 
 }

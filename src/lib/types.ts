@@ -12,6 +12,7 @@ export interface GamePiece {
   rowPos: number;
   colPos: number;
   color: Color;
+  type: 'T' | 'L' | 'RL' | 'Zig' | 'Zag' | 'Line' | 'Block';
 }
 
 export type Rotation = keyof GamePiece['shape']

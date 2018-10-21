@@ -1,4 +1,4 @@
-import {app, BrowserWindow} from 'electron';
+import {app, BrowserWindow, screen} from 'electron';
 import * as path from 'path';
 
 // Keep a global reference of the window object, if you don't, the window will
@@ -8,10 +8,11 @@ let mainWindow: BrowserWindow | undefined;
 const mainView = path.join(__dirname, 'index.html');
 
 function createWindow (): void {
+  const workarea: Electron.Rectangle = screen.getPrimaryDisplay().workArea;
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 400,
-    height: 440,
+    width: 800,
+    height: 600,
     useContentSize: true,
     resizable: false
   });

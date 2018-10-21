@@ -1,6 +1,7 @@
 import { GamePiece } from './types';
 
 export const L: GamePiece = {
+  type: 'L',
   shape: {
     0: [
       [1, 0],
@@ -28,6 +29,7 @@ export const L: GamePiece = {
 }
 
 export const ReverseL: GamePiece = {
+  type: 'RL',
   shape: {
     0: [
       [0, 1],
@@ -55,6 +57,7 @@ export const ReverseL: GamePiece = {
 }
 
 export const Zig: GamePiece = {
+  type: 'Zig',
   shape: {
     0: [
       [1, 1, 0],
@@ -82,6 +85,7 @@ export const Zig: GamePiece = {
 }
 
 export const Zag: GamePiece = {
+  type: 'Zag',
   shape: {
     0: [
       [0, 1, 1],
@@ -109,6 +113,7 @@ export const Zag: GamePiece = {
 }
 
 export const Line: GamePiece = {
+  type: 'Line',
   shape: {
     0: [
       [1],
@@ -136,6 +141,7 @@ export const Line: GamePiece = {
 }
 
 export const Block: GamePiece = {
+  type: 'Block',
   shape: {
     0: [
       [1, 1],
@@ -161,6 +167,7 @@ export const Block: GamePiece = {
 }
 
 export const T: GamePiece = {
+  type: 'T',
   shape: {
     0: [
       [0, 1, 0],
