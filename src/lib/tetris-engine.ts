@@ -85,7 +85,11 @@ function isColor(a: any): a is Color {
 
 const gameMusic = new Audio();
 gameMusic.autoplay = false;
-gameMusic.src = 'audio/tetris_a_type.mp3';
+gameMusic.addEventListener('ended', function () {
+  this.currentTime = 0;
+  this.play();
+}, false);
+gameMusic.src = 'audio/tetris-theme.m4a';
 
 const rotateSound = new Audio();
 rotateSound.autoplay = false;
@@ -207,7 +211,10 @@ export default class TetrisEngine {
   public readonly moveDown = (): void => {
     if (this.paused) { return; }
     if (this.gameover) { return; }
-    if (this.isHit()) { return this.renderNextPiece(); }
+    if (this.isHit()) {
+      hitSound.play();
+      return this.renderNextPiece();
+    }
     this.clearCurrentPiece();
     ++this.currentPiece.rowPos;
     const yLen = (
@@ -299,9 +306,6 @@ export default class TetrisEngine {
   }
 
   private readonly renderCurrentPiece = (): void => {
-    if (this.isGameOver()) {
-      return this.stopGame();
-    }
     const board = this.board;
     const piece = this.currentPiece;
     const rowPos = piece.rowPos;
@@ -454,6 +458,7 @@ export default class TetrisEngine {
     }
     if (this.playingAudio) {
       gameMusic.pause();
+      gameMusic.currentTime = 0;
       this.playingAudio = false;
     }
     if (this.onChange) { this.onChange(this.getState()); }
@@ -469,7 +474,6 @@ export default class TetrisEngine {
     const bottomPos = piece.rowPos + shape.length - 1;
 
     if (bottomPos === this.board.length - 1) {
-      hitSound.play();
       this.clearLines();
       return true;
     }
@@ -485,7 +489,6 @@ export default class TetrisEngine {
           this.board[boardRow] && this.board[boardRow][boardCol]
         );
         if (shapeValue && !bockIsPartOfShape && boardValue) {
-          hitSound.play();
           this.clearLines();
           return true;
         }
