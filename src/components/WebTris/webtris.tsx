@@ -17,6 +17,11 @@ interface WebtrisProps {
 export const Webtris: React.StatelessComponent<WebtrisProps> = (
   props: WebtrisProps
 ): React.ReactElement<WebtrisProps> => {
+  const statsStyle = {
+    fontFamily: 'Georgia',
+    padding: `18px 10px`,
+
+  };
     return (
       <div
         className='tetris-container'
@@ -58,32 +63,47 @@ export const Webtris: React.StatelessComponent<WebtrisProps> = (
               fontSize: 20,
               color: 'grey',
               verticalAlign: 'top',
-              width: props.canvasWidth / 4,
-              height: props.canvasHeight,
               marginTop: props.blockWidth
             }}
           >
-            <div style={{padding: 17.5}}>{props.stats.T.stats}</div>
-            <div style={{padding: 17.5}}>{props.stats.L.stats}</div>
-            <div style={{padding: 17.5}}>{props.stats.RL.stats}</div>
-            <div style={{padding: 17.5}}>{props.stats.Zig.stats}</div>
-            <div style={{padding: 17.5}}>{props.stats.Zag.stats}</div>
-            <div style={{padding: 17.5}}>{props.stats.Line.stats}</div>
-            <div style={{padding: 17.5}}>{props.stats.Block.stats}</div>
+            <div style={statsStyle}>{props.stats.T.stats}</div>
+            <div style={statsStyle}>{props.stats.L.stats}</div>
+            <div style={statsStyle}>{props.stats.RL.stats}</div>
+            <div style={statsStyle}>{props.stats.Zig.stats}</div>
+            <div style={statsStyle}>{props.stats.Zag.stats}</div>
+            <div style={statsStyle}>{props.stats.Line.stats}</div>
+            <div style={statsStyle}>{props.stats.Block.stats}</div>
           </div>
         </div>
-        <canvas
-          id='board-canvas'
+        <div
+          className='board-container'
           style={{
             display: 'inline-block',
-            border: '5px solid grey',
             marginRight: '25px',
             verticalAlign: 'top',
-            backgroundColor: 'midnightblue'
           }}
-          width={props.canvasWidth}
-          height={props.canvasHeight}
-        />
+        >
+          <div
+            style={{
+              padding: '5px 0',
+              borderTop: '5px solid grey',
+              borderLeft: '5px solid grey',
+              borderRight: '5px solid grey',
+              boxSizing: 'border-box',
+              fontSize: 16,
+              fontFamily: 'Georgia',
+              backgroundColor: 'midnightblue'
+            }}
+          >
+            Lines Cleared: {props.clearedLines}
+          </div>
+          <canvas
+            id='board-canvas'
+            style={{border: '5px solid grey', backgroundColor: 'midnightblue'}}
+            width={props.canvasWidth}
+            height={props.canvasHeight}
+          />
+        </div>
         <div
           className='side-car-right'
           style={{
@@ -97,7 +117,7 @@ export const Webtris: React.StatelessComponent<WebtrisProps> = (
         >
           <div
             style={{
-              marginTop: props.canvasHeight / 4
+              marginTop: props.canvasHeight / 6
             }}
           >
             Level: {props.level}<br/><br/>
