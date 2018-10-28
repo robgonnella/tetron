@@ -9,6 +9,7 @@ export interface TetrisState {
   score: number;
   clearedLines: number;
   gameover: boolean;
+  gameInProgress: boolean;
   nextShape: Array<number[]>;
   nextColor: Color;
   stats: Stats;
@@ -79,6 +80,7 @@ export default class TetrisEngine {
   public clearedLines: number = 0;
   public paused: boolean = false;
   public gameover: boolean = false;
+  public gameInProgress: boolean = false;
   public stats: Stats = {
     T: {
       type: 'T',
@@ -133,40 +135,27 @@ export default class TetrisEngine {
   private loopTimeout?: number;
   private playingAudio: boolean = false;
 
-  constructor() {
-    this.currentPiece = this.getRandomPiece();
-    this.stats[this.currentPiece.type].stats++
-    this.nextPiece = this.getRandomPiece();
-  }
-
-  public readonly run = (): void => {
-    if (!this.playingAudio) {
-      gameMusic.play();
-      this.playingAudio = true;
-    }
-    this.renderCurrentPiece();
-    this.loopTimeout = window.setTimeout(() => {
-      if (this.isGameOver()) {
-        this.stopGame();
-      } else {
-        this.moveDown(false);
-        this.run();
-      }
-    }, this.loopSpeed);
-  }
-
-  public readonly playAgain = (): TetrisEngine => {
-    const engine = new TetrisEngine();
-    if (this.onChange) {
-      engine.setChangeHandler(this.onChange)
-      if (engine.onChange) {
-        engine.onChange(engine.getState());
-      }
-    }
+  static PlayAgain(stateChangeHandler: ChangeCallback, level?: number) {
+    const engine = new TetrisEngine(level);
+    engine.setChangeHandler(stateChangeHandler);
+    engine.play();
     return engine;
   }
 
+  constructor(level?: number) {
+    this.currentPiece = this.getRandomPiece();
+    this.stats[this.currentPiece.type].stats++
+    this.nextPiece = this.getRandomPiece();
+    this.setLevel(level || 0);
+  }
+
+  public play = (): void => {
+    this.run();
+    this.gameInProgress = true;
+  }
+
   public readonly togglePause = (): void => {
+    if (!this.gameInProgress) { return; }
     if (this.loopTimeout) {
       clearTimeout(this.loopTimeout);
       this.loopTimeout = undefined
@@ -190,6 +179,16 @@ export default class TetrisEngine {
     this.onChange = cb;
   }
 
+  public readonly setLevel = (level: number) => {
+    if (level === this.level) { return; }
+    this.level = level;
+    if (level === 0) {
+      this.loopSpeed = 1000;
+    } else {
+      this.loopSpeed *= Math.pow(.75, level) || 1000;
+    }
+  }
+
   public readonly getState = (): TetrisState => {
     return {
       board: this.board,
@@ -197,6 +196,7 @@ export default class TetrisEngine {
       score: this.score,
       clearedLines: this.clearedLines,
       gameover: this.gameover,
+      gameInProgress: this.gameInProgress,
       nextShape: this.nextPiece.shape[this.nextPiece.rotation],
       nextColor: this.nextPiece.color,
       stats: this.stats
@@ -206,6 +206,8 @@ export default class TetrisEngine {
   public readonly moveDown = (accelerated = true): void => {
     if (this.paused) { return; }
     if (this.gameover) { return; }
+    if (!this.gameInProgress) { return; }
+
     if (this.isHit()) {
       hitSound.play();
       return this.renderNextPiece();
@@ -224,6 +226,8 @@ export default class TetrisEngine {
   public readonly moveLeft = () => {
     if (this.paused) { return; }
     if (this.gameover) { return; }
+    if (!this.gameInProgress) { return; }
+
     if (!this.canMoveLeft()) { return; }
     if (this.isAgainstWallOnLeft()) { return; }
     this.clearCurrentPiece();
@@ -234,6 +238,8 @@ export default class TetrisEngine {
   public readonly moveRight = () => {
     if (this.paused) { return; }
     if (this.gameover) { return; }
+    if (!this.gameInProgress) { return; }
+
     if (!this.canMoveRight()) { return; }
     if (this.isAgainstWallOnRight()) { return; }
     this.clearCurrentPiece();
@@ -244,6 +250,8 @@ export default class TetrisEngine {
   public readonly rotateLeft = (): void => {
     if (this.paused) { return; }
     if (this.gameover) { return; }
+    if (!this.gameInProgress) { return; }
+
     let wall: string = '';
     if (this.isAgainstWallOnLeft()) { wall = 'left'; }
     if (this.isAgainstWallOnRight()) { wall = 'right'; }
@@ -259,6 +267,8 @@ export default class TetrisEngine {
   public readonly rotateRight = () => {
     if (this.paused) { return; }
     if (this.gameover) { return; }
+    if (!this.gameInProgress) { return; }
+
     let wall: string = ''
     if (this.isAgainstWallOnLeft()) { wall = 'left'; }
     if (this.isAgainstWallOnRight()) { wall = 'right'; }
@@ -269,6 +279,22 @@ export default class TetrisEngine {
     this.updateColPosForWallPostions(wall);
     rotateSound.play();
     this.renderCurrentPiece();
+  }
+
+  private readonly run = (): void => {
+    if (!this.playingAudio) {
+      gameMusic.play();
+      this.playingAudio = true;
+    }
+    this.renderCurrentPiece();
+    this.loopTimeout = window.setTimeout(() => {
+      if (this.isGameOver()) {
+        this.stopGame();
+      } else {
+        this.moveDown(false);
+        this.run();
+      }
+    }, this.loopSpeed);
   }
 
   private readonly getRandomPiece = (): GamePiece => {
@@ -334,6 +360,8 @@ export default class TetrisEngine {
     const nextShape = this.currentPiece.shape[nextRotation];
     const nextColPos = this.getColPosForRotation(nextRotation);
 
+    // clear the board of the current piece so it's own colors don't trigger
+    // false positive
     this.clearCurrentPiece();
     loop1:
     for (let i = 0; i < nextShape.length; ++i) {
@@ -445,7 +473,6 @@ export default class TetrisEngine {
   }
 
   private stopGame = () => {
-    this.gameover = true;
     if (this.loopTimeout) {
       clearTimeout(this.loopTimeout);
       this.loopTimeout = undefined;
@@ -455,6 +482,8 @@ export default class TetrisEngine {
       gameMusic.currentTime = 0;
       this.playingAudio = false;
     }
+    this.gameover = true;
+    this.gameInProgress = false;
     if (this.onChange) { this.onChange(this.getState()); }
   }
 

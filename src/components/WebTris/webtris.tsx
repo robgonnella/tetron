@@ -2,6 +2,8 @@ import * as React from 'react';
 import TetrisEngine, { TetrisState, StatsPiece } from '../../lib/tetris-engine';
 
 interface StatsProps {
+  gameover: boolean;
+  gameInProgress: boolean
   piece: StatsPiece;
   blockWidth: number;
 }
@@ -9,7 +11,7 @@ const PieceWithStats: React.StatelessComponent<StatsProps> = (
   props: StatsProps
 ): React.ReactElement<StatsProps> => {
   return (
-    <div key={props.piece.type}>
+    <div>
       <canvas
         id={`stats-canvas-${props.piece.type}`}
         width={props.blockWidth * 4}
@@ -28,7 +30,7 @@ const PieceWithStats: React.StatelessComponent<StatsProps> = (
           bottom: props.piece.shape.length * (props.blockWidth / 4)
         }}
       >
-        {props.piece.stats}
+        {props.gameInProgress || props.gameover ? props.piece.stats : ''}
       </div>
     </div>
   );
@@ -39,6 +41,8 @@ interface SideCarLeftProps {
   height: number;
   blockWidth: number;
   stats: TetrisState['stats'];
+  gameInProgress: boolean
+  gameover: boolean;
 }
 const SideCarLeft: React.StatelessComponent<SideCarLeftProps> = (
   props: SideCarLeftProps
@@ -48,8 +52,11 @@ const SideCarLeft: React.StatelessComponent<SideCarLeftProps> = (
   for (p in props.stats) {
     pieces.push(
       <PieceWithStats
+        key={p}
         piece={props.stats[p]}
         blockWidth={props.blockWidth}
+        gameInProgress={props.gameInProgress}
+        gameover={props.gameover}
       />
     );
   }
@@ -71,23 +78,127 @@ const SideCarLeft: React.StatelessComponent<SideCarLeftProps> = (
   );
 }
 
-interface GameOverProps {
+interface SelectLevelProps {
+  selectedLevel: number;
+  selectLevel(level: number): void;
+}
+const SelectLevel: React.StatelessComponent<SelectLevelProps> = (
+  props: SelectLevelProps
+): React.ReactElement<SelectLevelProps> => {
+  let levels1: JSX.Element[] = [];
+  let levels2: JSX.Element[] = [];
+  for (const level of [0, 1, 2, 3, 4]) {
+    const style = level === props.selectedLevel ?
+      { backgroundColor: 'red', color: 'white'} :
+      undefined;
+    levels1.push(
+      <td
+        key={level}
+        style={{
+          border: '2px solid grey',
+          padding: 5,
+          ...style
+        }}
+        onClick={() => props.selectLevel(level)}>
+        {level}
+      </td>
+    );
+  }
+  for (const level of [5, 6, 7, 8, 9]) {
+    const style = level === props.selectedLevel ?
+      { backgroundColor: 'red', color: 'white' } :
+      undefined;
+    levels2.push(
+      <td
+        key={level}
+        style={{
+          border: '2px solid grey',
+          padding: 5,
+          ...style
+        }}
+        onClick={() => props.selectLevel(level)}>
+        {level}
+      </td>
+    );
+  }
+  return (
+    <table
+      style={{
+        margin: '25px auto',
+        textAlign: 'center'
+        }}
+      >
+      <thead>
+        <tr>
+          <th colSpan={10}>Select Level:</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          {levels1}
+        </tr>
+        <tr>
+          {levels2}
+        </tr>
+      </tbody>
+    </table>
+  );
+}
+
+interface PlayGameProps {
+  finalLevel: number;
+  finalScore: number;
   gameover: boolean;
+  selectedLevel: number;
+  selectLevel(level: number): void;
+  startGame(): void;
   playAgain(): void;
 }
-const GameOver: React.StatelessComponent<GameOverProps> = (
-  props: GameOverProps
-  ): React.ReactElement<GameOverProps> | null => {
-  if (!props.gameover) { return null; }
+const PlayGame: React.StatelessComponent<PlayGameProps> = (
+  props: PlayGameProps
+): React.ReactElement<PlayGameProps> => {
+  const buttonTitle = props.gameover ? 'Play Again' : 'Start Game';
+  const buttonAction = props.gameover ? props.playAgain : props.startGame;
+  const gameOverMessage = props.gameover ?
+    (
+      <div>
+        <h2>Game Over!</h2>
+        <p>Final Level: {props.finalLevel}</p>
+        <p>Final Score: {props.finalScore}</p>
+      </div>
+    ) :
+    null;
   return (
     <div>
-      <h3>Game Over!!</h3>
-      <button onClick={props.playAgain}>
-        Play Again
-        </button>
+      {gameOverMessage}
+      <SelectLevel
+        selectedLevel={props.selectedLevel}
+        selectLevel={props.selectLevel}
+      />
+      <button onClick={buttonAction}>
+        {buttonTitle}
+      </button>
     </div>
   );
 }
+
+interface LevelAndScoreProps {
+  level: number;
+  score: number;
+}
+const LevelAndScore: React.StatelessComponent<
+  LevelAndScoreProps
+> = (
+  props: LevelAndScoreProps
+): React.ReactElement<LevelAndScoreProps> => {
+  return (
+    <div style={{marginTop: 25}}>
+      <p style={{marginBottom: 10}}>Level: {props.level}</p>
+      <p>Score: {props.score}</p>
+    </div>
+  );
+}
+
 
 interface SideCarRightProps {
   width: number;
@@ -97,11 +208,28 @@ interface SideCarRightProps {
   level: number;
   score: number;
   gameover: boolean;
+  gameInProgress: boolean;
+  selectedLevel: number;
+  selectLevel(level: number): void;
   playAgain(): void;
+  startGame(): void;
 }
 const SideCarRight: React.StatelessComponent<SideCarRightProps> = (
   props: SideCarRightProps
 ): React.ReactElement<SideCarRightProps> => {
+  let content = props.gameInProgress ?
+    <LevelAndScore level={props.level} score={props.score} /> :
+    <PlayGame
+      gameover={props.gameover}
+      finalScore={props.score}
+      finalLevel={props.level}
+      selectedLevel={props.selectedLevel}
+      selectLevel={props.selectLevel}
+      playAgain={props.playAgain}
+      startGame={props.startGame}
+    />;
+  const nextPieceBorder = props.gameInProgress ? '5px solid grey' : '';
+  // always render canvas since we need consisten access to it
   return (
     <div
       style={{
@@ -113,20 +241,12 @@ const SideCarRight: React.StatelessComponent<SideCarRightProps> = (
         backgroundColor: 'midnightblue'
       }}
     >
-      <div
-        style={{
-          marginTop: props.width / 6
-        }}
-      >
-        Level: {props.level}<br /><br />
-        Score: {props.score}<br /><br />
-        <GameOver gameover={props.gameover} playAgain={props.playAgain} />
-      </div>
+      {content}
       <canvas
         id='next-canvas'
         width={props.nextShape[0].length * 2 * props.blockWidth}
         height={props.nextShape.length * 2 * props.blockWidth}
-        style={{ marginTop: 25, border: '5px solid grey' }}
+        style={{ marginTop: 25, border: nextPieceBorder }}
       />
     </div>
   );
@@ -183,6 +303,10 @@ interface WebtrisProps {
   clearedLines: number;
   nextShape: Array<number[]>;
   gameover: boolean;
+  gameInProgress: boolean;
+  selectedLevel: number;
+  selectLevel(level: number): void;
+  startGame(): void;
   playAgain(): void;
 }
 
@@ -207,6 +331,8 @@ export const Webtris: React.StatelessComponent<WebtrisProps> = (
         height={props.canvasHeight}
         blockWidth={props.blockWidth}
         stats={props.stats}
+        gameInProgress={props.gameInProgress}
+        gameover={props.gameover}
       />
       <Board
         canvasWidth={props.canvasWidth}
@@ -221,7 +347,11 @@ export const Webtris: React.StatelessComponent<WebtrisProps> = (
         level={props.level}
         score={props.score}
         gameover={props.gameover}
+        gameInProgress={props.gameInProgress}
         playAgain={props.playAgain}
+        startGame={props.startGame}
+        selectedLevel={props.selectedLevel}
+        selectLevel={props.selectLevel}
       />
     </div>
   );

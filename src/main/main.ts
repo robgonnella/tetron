@@ -21,7 +21,9 @@ function createWindow (): void {
   mainWindow.loadFile(mainView);
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools({mode: 'detach'});
+  if (process.env.NODE_ENV === 'development') {
+    mainWindow.webContents.openDevTools({mode: 'detach'});
+  }
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {

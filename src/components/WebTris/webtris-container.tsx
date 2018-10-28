@@ -7,6 +7,7 @@ interface WebtrisState {
   blockWidth: number;
   canvasWidth: number;
   canvasHeight: number;
+  selectedLevel: number;
 }
 
 interface WebtrisProps {
@@ -40,7 +41,8 @@ export default class WebtrisContainer extends React.Component<
       canvasHeight: Math.max(
         this.tetrisEngine.board.length * blockWidth,
         220
-      )
+      ),
+      selectedLevel: 0
     }
   }
 
@@ -86,7 +88,6 @@ export default class WebtrisContainer extends React.Component<
     });
 
     this.drawStatsPieces();
-    this.tetrisEngine.run();
   }
 
   componentDidUpdate(prevProps: {}, prevState: WebtrisState) {
@@ -99,28 +100,50 @@ export default class WebtrisContainer extends React.Component<
       blockWidth: this.state.blockWidth,
       canvasWidth: this.state.canvasWidth,
       canvasHeight: this.state.canvasHeight,
-      playAgain: this.playAgain,
       gameover: this.state.tetris.gameover,
+      gameInProgress: this.state.tetris.gameInProgress,
       stats: this.state.tetris.stats,
       level: this.state.tetris.level,
       score: this.state.tetris.score,
       clearedLines: this.state.tetris.clearedLines,
-      nextShape: this.state.tetris.nextShape
+      nextShape: this.state.tetris.nextShape,
+      startGame: this.startGame,
+      playAgain: this.playAgain,
+      selectLevel: this.selectLevel,
+      selectedLevel: this.state.selectedLevel
     }
     return <Webtris {...props} />;
   }
 
   private handleTetrisStateChange = (tetris: TetrisState): void => {
+    const statsDrawn = this.state.tetris.gameInProgress;
     this.setState({tetris});
+    if (!statsDrawn) {
+      this.drawStatsPieces();
+    }
   }
 
-  private readonly playAgain = (): void => {
-    this.tetrisEngine = this.tetrisEngine.playAgain();
-    this.tetrisEngine.run();
+  private startGame = (): void => {
+    this.tetrisEngine.play();
+    this.drawStatsPieces();
+  }
+
+  private playAgain = (): void => {
+    this.tetrisEngine = TetrisEngine.PlayAgain(
+      this.handleTetrisStateChange,
+      this.state.selectedLevel
+    );
+    this.setState({tetris: this.tetrisEngine.getState()});
+  }
+
+  private selectLevel = (level: number) => {
+    this.tetrisEngine.setLevel(level);
+    this.setState({selectedLevel: level});
   }
 
   // expensive but only drawn once at start of game
   private readonly drawStatsPieces = (): void => {
+    if (!this.state.tetris.gameInProgress) { return; }
     const blockWidth = this.state.blockWidth;
     const w = blockWidth;
     const h = blockWidth;
@@ -151,6 +174,9 @@ export default class WebtrisContainer extends React.Component<
     if (!this.nextCtx) { return; }
     if (!this.nextCanvas) { return; }
     this.nextCtx.clearRect(0, 0, this.nextCanvas.width, this.nextCanvas.height);
+
+    if (!this.state.tetris.gameInProgress) { return; }
+    if (this.state.tetris.gameover) { return; }
 
     const piece = this.state.tetris.nextShape;
     const color = this.state.tetris.nextColor;

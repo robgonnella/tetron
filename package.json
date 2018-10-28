@@ -4,7 +4,7 @@
   "description": "Tetris as a web application!",
   "main": "main.js",
   "scripts": {
-    "build": "rimraf build && mkdir -p build && cp -R ./static/* build/ && webpack",
+    "build": "rimraf build && mkdir -p build && cp -R ./static/* build/ && NODE_ENV=development webpack",
     "start": "electron build/tetronMain.js"
   },
   "author": "Rob Gonnella",
