@@ -3,6 +3,7 @@ export type Color =
   'red' | 'cyan' | 'magenta' | 'blue' | 'yellow' | 'green' | 'purple';
 
 export interface GamePiece {
+  type: 'T' | 'L' | 'RL' | 'Zig' | 'Zag' | 'Line' | 'Block';
   shape: {
     0: NumberVector;
     90: NumberVector;
@@ -13,7 +14,15 @@ export interface GamePiece {
   rowPos: number;
   colPos: number;
   color: Color;
-  type: 'T' | 'L' | 'RL' | 'Zig' | 'Zag' | 'Line' | 'Block';
 }
 
 export type Rotation = keyof GamePiece['shape']
+
+export interface StatsPiece {
+  type: GamePiece['type'];
+  shape: Array<number[]>;
+  color: Color;
+  stats: number;
+}
+
+export type Stats = Record<GamePiece['type'], StatsPiece>;

@@ -1,5 +1,6 @@
-import { Color, GamePiece, Rotation } from './types';
+import { Color, GamePiece, Rotation, Stats } from './types';
 import { L, RL, Zig, Zag, Line, Block, T } from './game-pieces';
+export { StatsPiece } from './types';
 
 type Board = Array<Array<0|Color>>;
 export interface TetrisState {
@@ -8,47 +9,9 @@ export interface TetrisState {
   score: number;
   clearedLines: number;
   gameover: boolean;
-  nextPiece: Array<number[]>;
+  nextShape: Array<number[]>;
   nextColor: Color;
   stats: Stats;
-}
-
-interface Stats {
-  T: {
-    shape: GamePiece['shape']['0'];
-    stats: number;
-    color: Color;
-  },
-  L: {
-    shape: GamePiece['shape']['90'];
-    stats: number;
-    color: Color;
-  },
-  RL: {
-    shape: GamePiece['shape']['90'];
-    stats: number;
-    color: Color;
-  },
-  Zig: {
-    shape: GamePiece['shape']['0'];
-    stats: number;
-    color: Color;
-  },
-  Zag: {
-    shape: GamePiece['shape']['0'];
-    stats: number;
-    color: Color;
-  },
-  Line: {
-    shape: GamePiece['shape']['90'];
-    stats: number;
-    color: Color;
-  },
-  Block: {
-    shape: GamePiece['shape']['0'];
-    stats: number;
-    color: Color;
-  }
 }
 
 type ChangeCallback = (b: TetrisState) => void;
@@ -62,6 +25,7 @@ function generateCleanBoard(): Board {
 }
 
 const cleanBoard = generateCleanBoard();
+const rotations: Rotation[] = [0, 90, 180, 270];
 const colors: Color[] = [
   'red',
   'blue',
@@ -116,22 +80,55 @@ export default class TetrisEngine {
   public paused: boolean = false;
   public gameover: boolean = false;
   public stats: Stats = {
-    T: { shape: T.shape['0'], stats: 0, color: T.color},
-    L: { shape: L.shape['90'], stats: 0, color: L.color},
-    RL: { shape: RL.shape['90'], stats: 0, color: RL.color},
-    Zig: { shape: Zig.shape['0'], stats: 0, color: Zig.color},
-    Zag: { shape: Zag.shape['0'], stats: 0, color: Zag.color},
-    Line: { shape: Line.shape['90'], stats: 0, color: Line.color},
-    Block: { shape: Block.shape['0'], stats: 0, color: Block.color}
+    T: {
+      type: 'T',
+      shape: T.shape['0'],
+      stats: 0,
+      color: T.color
+    },
+    L: {
+      type: 'L',
+      shape: L.shape['90'],
+      stats: 0,
+      color: L.color
+    },
+    RL: {
+      type: 'RL',
+      shape: RL.shape['90'],
+      stats: 0,
+      color: RL.color
+    },
+    Zig: {
+      type: 'Zig',
+      shape: Zig.shape['0'],
+      stats: 0,
+      color: Zig.color
+    },
+    Zag: {
+      type: 'Zag',
+      shape: Zag.shape['0'],
+      stats: 0,
+      color: Zag.color
+    },
+    Line: {
+      type: 'Line',
+      shape: Line.shape['90'],
+      stats: 0,
+      color: Line.color
+    },
+    Block: {
+      type: 'Block',
+      shape: Block.shape['0'],
+      stats: 0,
+      color: Block.color
+    }
   };
 
+  private readonly gamePieces: GamePiece[] = [L, RL, Zig, Zag, Line, Block, T];
   private levelUpIn: number = 10;
-  private onChange?: ChangeCallback;
-  private gamePieces: GamePiece[] = [ L, RL, Zig, Zag, Line, Block, T ];
-  private colors: Color[] = colors as Color[];
-  private rotation: Rotation[] = [0, 90, 180, 270];
   private currentPiece: GamePiece;
   private nextPiece: GamePiece;
+  private onChange?: ChangeCallback;
   private loopSpeed: number = 1000;
   private loopTimeout?: number;
   private playingAudio: boolean = false;
@@ -144,7 +141,6 @@ export default class TetrisEngine {
 
   public readonly run = (): void => {
     if (!this.playingAudio) {
-      console.log('starting audio playback');
       gameMusic.play();
       this.playingAudio = true;
     }
@@ -153,10 +149,7 @@ export default class TetrisEngine {
       if (this.isGameOver()) {
         this.stopGame();
       } else {
-        const shape = this.currentPiece.shape[this.currentPiece.rotation];
-        // points for soft dropping
-        this.score += shape.length;
-        this.moveDown();
+        this.moveDown(false);
         this.run();
       }
     }, this.loopSpeed);
@@ -180,6 +173,8 @@ export default class TetrisEngine {
       this.paused = true;
       gameMusic.pause();
       this.playingAudio = false;
+      // send out clean board on pause so users
+      // can't pause and plan
       const data = this.getState();
       data.board = cleanBoard;
       if (this.onChange) { this.onChange(data); }
@@ -202,13 +197,13 @@ export default class TetrisEngine {
       score: this.score,
       clearedLines: this.clearedLines,
       gameover: this.gameover,
-      nextPiece: this.nextPiece.shape[this.nextPiece.rotation],
+      nextShape: this.nextPiece.shape[this.nextPiece.rotation],
       nextColor: this.nextPiece.color,
       stats: this.stats
     };
   }
 
-  public readonly moveDown = (): void => {
+  public readonly moveDown = (accelerated = true): void => {
     if (this.paused) { return; }
     if (this.gameover) { return; }
     if (this.isHit()) {
@@ -217,14 +212,13 @@ export default class TetrisEngine {
     }
     this.clearCurrentPiece();
     ++this.currentPiece.rowPos;
-    const yLen = (
-      this.currentPiece.shape[this.currentPiece.rotation].length
-    );
-    const bottom = this.currentPiece.rowPos + yLen;
-    if (bottom > this.board.length) {
-      this.currentPiece.rowPos = this.board.length - yLen;
-    }
     this.renderCurrentPiece();
+    if (accelerated) {
+      const shape = this.currentPiece.shape[this.currentPiece.rotation];
+      const height = shape.length;
+      // points for accerated drop (height of peice plus drop increment)
+      this.score += height + 1;
+    }
   }
 
   public readonly moveLeft = () => {
@@ -282,9 +276,9 @@ export default class TetrisEngine {
       Math.floor(Math.random() * this.gamePieces.length)
     ]};
     const rotation = (
-      this.rotation[Math.floor(Math.random() * this.rotation.length)]
-    );
-    const color = this.colors[Math.floor(Math.random() * this.colors.length)];
+      rotations[Math.floor(Math.random() * 4)]
+    ) as Rotation;
+    const color = colors[Math.floor(Math.random() * colors.length)];
     piece.color = color;
     piece.rotation = rotation;
     return piece;
@@ -498,11 +492,11 @@ export default class TetrisEngine {
     return false;
   }
 
-  private computeStats = (newlyClearedLines: 0 | 1 | 2| 3 | 4) => {
+  private computeScore = (newlyClearedLines: 0 | 1 | 2| 3 | 4) => {
     this.clearedLines += newlyClearedLines;
     if (newlyClearedLines >= this.levelUpIn) {
       this.level++;
-      this.levelUpIn = 10 - Math.floor(newlyClearedLines / this.levelUpIn);
+      this.levelUpIn = 10 - (this.levelUpIn - newlyClearedLines);
       this.loopSpeed *= .75;
     } else {
       this.levelUpIn -= newlyClearedLines;
@@ -529,7 +523,7 @@ export default class TetrisEngine {
       lineRemovalSound.play();
     }
 
-    this.computeStats(numClearedLines as 0 | 1 | 2 | 3 | 4);
+    this.computeScore(numClearedLines as 0 | 1 | 2 | 3 | 4);
     if (this.onChange) { this.onChange(this.getState()); }
   }
 

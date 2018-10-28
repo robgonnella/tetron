@@ -1,138 +1,74 @@
 import * as React from 'react';
-import TetrisEngine from '../../lib/tetris-engine';
+import TetrisEngine, { TetrisState, StatsPiece } from '../../lib/tetris-engine';
 
-interface WebtrisProps {
+interface StatsProps {
+  piece: StatsPiece;
   blockWidth: number;
-  canvasWidth: number;
-  canvasHeight: number;
-  stats: TetrisEngine['stats'];
-  level: number;
-  score: number;
-  clearedLines: number;
-  nextPiece: Array<number[]>;
-  gameover: boolean;
-  playAgain(): void;
 }
-
-export const Webtris: React.StatelessComponent<WebtrisProps> = (
-  props: WebtrisProps
-): React.ReactElement<WebtrisProps> => {
-  const statsStyle = {
-    fontFamily: 'Georgia',
-    padding: `18px 10px`,
-
-  };
-    return (
-      <div
-        className='tetris-container'
+const PieceWithStats: React.StatelessComponent<StatsProps> = (
+  props: StatsProps
+): React.ReactElement<StatsProps> => {
+  return (
+    <div key={props.piece.type}>
+      <canvas
+        id={`stats-canvas-${props.piece.type}`}
+        width={props.blockWidth * 4}
+        height={props.piece.shape.length * props.blockWidth}
         style={{
-          backgroundImage: 'url(./images/tetris-background.png)',
-          width: '100vw',
-          height: '100vh',
-          textAlign: 'center',
-          color: 'white',
-          verticalAlign: 'top',
-          paddingTop: props.blockWidth * 4
+          marginTop: props.blockWidth,
+          marginRight: props.blockWidth,
+        }}
+      />
+      <div
+        style={{
+          position: 'relative',
+          display: 'inline-block',
+          fontSize: 20,
+          color: 'grey',
+          bottom: props.piece.shape.length * (props.blockWidth / 4)
         }}
       >
-        <div
-          className='side-car-left'
-          style={{
-            display: 'inline-block',
-            borderRight: '3px solid black',
-            width: props.canvasWidth,
-            height: props.canvasHeight,
-            border: '5px solid grey',
-            marginRight: '25px',
-            verticalAlign: 'top',
-            backgroundColor: 'midnightblue'
-          }}
-        >
-          <canvas
-            id='stats-canvas'
-            width={props.canvasWidth/2}
-            height={props.canvasHeight}
-            style={{
-              marginTop: props.blockWidth + (props.blockWidth / 2)
-            }}
-          />
-          <div
-            className='stats-numbers'
-            style={{
-              display: 'inline-block',
-              fontSize: 20,
-              color: 'grey',
-              verticalAlign: 'top',
-              marginTop: props.blockWidth
-            }}
-          >
-            <div style={statsStyle}>{props.stats.T.stats}</div>
-            <div style={statsStyle}>{props.stats.L.stats}</div>
-            <div style={statsStyle}>{props.stats.RL.stats}</div>
-            <div style={statsStyle}>{props.stats.Zig.stats}</div>
-            <div style={statsStyle}>{props.stats.Zag.stats}</div>
-            <div style={statsStyle}>{props.stats.Line.stats}</div>
-            <div style={statsStyle}>{props.stats.Block.stats}</div>
-          </div>
-        </div>
-        <div
-          className='board-container'
-          style={{
-            display: 'inline-block',
-            marginRight: '25px',
-            verticalAlign: 'top',
-          }}
-        >
-          <div
-            style={{
-              padding: '5px 0',
-              borderTop: '5px solid grey',
-              borderLeft: '5px solid grey',
-              borderRight: '5px solid grey',
-              boxSizing: 'border-box',
-              fontSize: 16,
-              fontFamily: 'Georgia',
-              backgroundColor: 'midnightblue'
-            }}
-          >
-            Lines Cleared: {props.clearedLines}
-          </div>
-          <canvas
-            id='board-canvas'
-            style={{border: '5px solid grey', backgroundColor: 'midnightblue'}}
-            width={props.canvasWidth}
-            height={props.canvasHeight}
-          />
-        </div>
-        <div
-          className='side-car-right'
-          style={{
-            display: 'inline-block',
-            width: props.canvasWidth,
-            height: props.canvasHeight,
-            border: '5px solid grey',
-            verticalAlign: 'top',
-            backgroundColor: 'midnightblue'
-          }}
-        >
-          <div
-            style={{
-              marginTop: props.canvasHeight / 6
-            }}
-          >
-            Level: {props.level}<br/><br/>
-            Score: {props.score}<br/><br/>
-            <GameOver gameover={props.gameover} playAgain={props.playAgain} />
-          </div>
-          <canvas
-            id='next-canvas'
-            width={props.nextPiece[0].length * 2 * props.blockWidth}
-            height={props.nextPiece.length * 2 * props.blockWidth}
-            style={{marginTop: 25, border: '5px solid grey'}}
-          />
-        </div>
+        {props.piece.stats}
       </div>
+    </div>
+  );
+}
+
+interface SideCarLeftProps {
+  width: number;
+  height: number;
+  blockWidth: number;
+  stats: TetrisState['stats'];
+}
+const SideCarLeft: React.StatelessComponent<SideCarLeftProps> = (
+  props: SideCarLeftProps
+): React.ReactElement<SideCarLeftProps> => {
+  let pieces: React.ReactElement<StatsProps>[] = [];
+  let p: keyof SideCarLeftProps['stats'];
+  for (p in props.stats) {
+    pieces.push(
+      <PieceWithStats
+        piece={props.stats[p]}
+        blockWidth={props.blockWidth}
+      />
     );
+  }
+  return (
+    <div
+      className='side-car-left'
+      style={{
+        display: 'inline-block',
+        width: props.width,
+        height: props.height,
+        border: '5px solid grey',
+        marginRight: '25px',
+        verticalAlign: 'top',
+        backgroundColor: 'midnightblue'
+      }}
+    >
+      {pieces}
+    </div>
+  );
 }
 
 interface GameOverProps {
@@ -149,6 +85,144 @@ const GameOver: React.StatelessComponent<GameOverProps> = (
       <button onClick={props.playAgain}>
         Play Again
         </button>
+    </div>
+  );
+}
+
+interface SideCarRightProps {
+  width: number;
+  height: number;
+  blockWidth: number;
+  nextShape: Array<number[]>;
+  level: number;
+  score: number;
+  gameover: boolean;
+  playAgain(): void;
+}
+const SideCarRight: React.StatelessComponent<SideCarRightProps> = (
+  props: SideCarRightProps
+): React.ReactElement<SideCarRightProps> => {
+  return (
+    <div
+      style={{
+        display: 'inline-block',
+        width: props.width,
+        height: props.height,
+        border: '5px solid grey',
+        verticalAlign: 'top',
+        backgroundColor: 'midnightblue'
+      }}
+    >
+      <div
+        style={{
+          marginTop: props.width / 6
+        }}
+      >
+        Level: {props.level}<br /><br />
+        Score: {props.score}<br /><br />
+        <GameOver gameover={props.gameover} playAgain={props.playAgain} />
+      </div>
+      <canvas
+        id='next-canvas'
+        width={props.nextShape[0].length * 2 * props.blockWidth}
+        height={props.nextShape.length * 2 * props.blockWidth}
+        style={{ marginTop: 25, border: '5px solid grey' }}
+      />
+    </div>
+  );
+}
+
+interface BoardProps {
+  canvasWidth: number;
+  canvasHeight: number;
+  clearedLines: number;
+}
+const Board: React.StatelessComponent<BoardProps> = (
+  props: BoardProps
+): React.ReactElement<BoardProps> => {
+  return (
+    <div
+      className='board-container'
+      style={{
+        display: 'inline-block',
+        marginRight: '25px',
+        verticalAlign: 'top',
+      }}
+    >
+      <div
+        style={{
+          padding: '5px 0',
+          borderTop: '5px solid grey',
+          borderLeft: '5px solid grey',
+          borderRight: '5px solid grey',
+          boxSizing: 'border-box',
+          fontSize: 16,
+          fontFamily: 'Georgia',
+          backgroundColor: 'midnightblue'
+        }}
+      >
+        Lines Cleared: {props.clearedLines}
+      </div>
+      <canvas
+        id='board-canvas'
+        style={{ border: '5px solid grey', backgroundColor: 'midnightblue' }}
+        width={props.canvasWidth}
+        height={props.canvasHeight}
+      />
+    </div>
+  );
+}
+
+interface WebtrisProps {
+  blockWidth: number;
+  canvasWidth: number;
+  canvasHeight: number;
+  stats: TetrisEngine['stats'];
+  level: number;
+  score: number;
+  clearedLines: number;
+  nextShape: Array<number[]>;
+  gameover: boolean;
+  playAgain(): void;
+}
+
+export const Webtris: React.StatelessComponent<WebtrisProps> = (
+  props: WebtrisProps
+): React.ReactElement<WebtrisProps> => {
+  return (
+    <div style={{
+        backgroundImage: 'url(./images/tetris-background.png)',
+        width: '100vw',
+        height: '100vh',
+        textAlign: 'center',
+        color: 'white',
+        verticalAlign: 'top',
+        paddingTop: 25,
+        fontFamily: 'Georgia',
+        letterSpacing: 2
+      }}
+    >
+      <SideCarLeft
+        width={props.canvasWidth}
+        height={props.canvasHeight}
+        blockWidth={props.blockWidth}
+        stats={props.stats}
+      />
+      <Board
+        canvasWidth={props.canvasWidth}
+        canvasHeight={props.canvasHeight}
+        clearedLines={props.clearedLines}
+      />
+      <SideCarRight
+        width={props.canvasWidth}
+        height={props.canvasHeight}
+        blockWidth={props.blockWidth}
+        nextShape={props.nextShape}
+        level={props.level}
+        score={props.score}
+        gameover={props.gameover}
+        playAgain={props.playAgain}
+      />
     </div>
   );
 }

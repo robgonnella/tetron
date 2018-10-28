@@ -19,10 +19,8 @@ export default class WebtrisContainer extends React.Component<
 > {
   private boardCanvas?: HTMLCanvasElement;
   private nextCanvas?: HTMLCanvasElement;
-  private statsCanvas?: HTMLCanvasElement;
   private boardCtx?: CanvasRenderingContext2D;
   private nextCtx?: CanvasRenderingContext2D;
-  private statsCtx?: CanvasRenderingContext2D;
   private tetrisEngine: TetrisEngine = new TetrisEngine();
 
   constructor(props: {}) {
@@ -53,17 +51,10 @@ export default class WebtrisContainer extends React.Component<
     this.nextCanvas = (
       document.getElementById('next-canvas') as HTMLCanvasElement
     );
-    this.statsCanvas = document.getElementById(
-      'stats-canvas'
-    ) as HTMLCanvasElement;
-
     this.boardCtx = this.boardCanvas.getContext(
       '2d'
     ) as CanvasRenderingContext2D;
     this.nextCtx = this.nextCanvas.getContext('2d') as CanvasRenderingContext2D;
-    this.statsCtx = this.statsCanvas.getContext(
-      '2d'
-    ) as CanvasRenderingContext2D;
 
     document.addEventListener('keydown', (evt) => {
       if (!this.boardCtx || !this.boardCanvas) { return; }
@@ -114,7 +105,7 @@ export default class WebtrisContainer extends React.Component<
       level: this.state.tetris.level,
       score: this.state.tetris.score,
       clearedLines: this.state.tetris.clearedLines,
-      nextPiece: this.state.tetris.nextPiece
+      nextShape: this.state.tetris.nextShape
     }
     return <Webtris {...props} />;
   }
@@ -128,31 +119,31 @@ export default class WebtrisContainer extends React.Component<
     this.tetrisEngine.run();
   }
 
+  // expensive but only drawn once at start of game
   private readonly drawStatsPieces = (): void => {
-    if (!this.statsCtx) { return; }
-    if (!this.statsCanvas) { return; }
-    this.statsCtx.font = "20px Georgia";
     const blockWidth = this.state.blockWidth;
     const w = blockWidth;
     const h = blockWidth;
-    let topOffset = 0;
     let type: keyof TetrisState['stats'];
     for (type in this.state.tetris.stats) {
+      const canvas = (
+        document.getElementById(`stats-canvas-${type}`) as HTMLCanvasElement
+      );
+      const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
       const piece = this.state.tetris.stats[type];
       for (let i = 0; i < piece.shape.length; ++i) {
         for (let j = 0; j < piece.shape[0].length; ++j) {
           if (piece.shape[i][j] !== 0) {
-            const y = (this.state.blockWidth * i) + topOffset;
-            const x = (this.state.blockWidth * j) + this.state.blockWidth;
-            this.statsCtx.fillStyle = piece.color;
-            this.statsCtx.strokeStyle = 'black';
-            this.statsCtx.lineWidth = 2;
-            this.statsCtx.fillRect(x, y, w, h);
-            this.statsCtx.strokeRect(x, y, w, h);
+            const y = (i * h);
+            const x = (j * w);
+            ctx.fillStyle = piece.color;
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 2;
+            ctx.fillRect(x, y, w, h);
+            ctx.strokeRect(x, y, w, h);
           }
         }
       }
-      topOffset += (piece.shape.length * blockWidth) + blockWidth;
     }
   }
 
@@ -161,7 +152,7 @@ export default class WebtrisContainer extends React.Component<
     if (!this.nextCanvas) { return; }
     this.nextCtx.clearRect(0, 0, this.nextCanvas.width, this.nextCanvas.height);
 
-    const piece = this.state.tetris.nextPiece;
+    const piece = this.state.tetris.nextShape;
     const color = this.state.tetris.nextColor;
     const centerY = piece.length / 2;
     const centerX = piece[0].length / 2
