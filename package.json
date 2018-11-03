@@ -1,20 +1,34 @@
 {
-  "name": "webtris",
-  "version": "0.0.1",
-  "description": "Tetris as a web application!",
-  "main": "main.js",
+  "name": "tetron",
+  "version": "1.0.0",
+  "description": "Tetris as an electron application!",
+  "author": "Rob Gonnella",
+  "main": "build/tetronMain.js",
   "scripts": {
     "build": "rimraf build && mkdir -p build && cp -R ./static/* build/ && webpack",
     "build:debug": "rimraf build && mkdir -p build && cp -R ./static/* build/ && NODE_ENV=development webpack",
-    "start": "electron build/tetronMain.js"
+    "start": "electron build/tetronMain.js",
+    "pack": "electron-builder"
   },
-  "author": "Rob Gonnella",
-  "license": "MIT",
+  "build": {
+    "appId": "com.quantum-lexicon.tetron",
+    "productName": "Tetron",
+    "directories": {
+      "output": "package",
+      "buildResources": "static/resources"
+    },
+    "mac": {
+      "category": "public.app-category.games",
+      "icon": "tetris-icon2.icns",
+      "target": ["pkg"]
+    }
+  },
   "devDependencies": {
     "@types/node": "^10.11.4",
     "@types/react": "^16.4.16",
     "@types/react-dom": "^16.0.8",
     "electron": "^3.0.3",
+    "electron-builder": "^20.28.4",
     "html-webpack-plugin": "^3.2.0",
     "react": "^16.5.2",
     "react-dom": "^16.5.2",
