@@ -187,6 +187,7 @@ export default class TetrisEngine {
     } else {
       this.loopSpeed *= Math.pow(.75, level) || 1000;
     }
+    this.levelUpIn = Math.min(100, (10 * this.level + 10));
   }
 
   public readonly getState = (): TetrisState => {
