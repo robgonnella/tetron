@@ -1,6 +1,6 @@
 {
   "name": "tetron",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Tetris as an electron application!",
   "author": "Rob Gonnella",
   "main": "build/tetronMain.js",
