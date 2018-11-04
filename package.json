@@ -21,6 +21,10 @@
       "category": "public.app-category.games",
       "icon": "tetris-icon2.icns",
       "target": ["pkg"]
+    },
+    "win": {
+      "target": ["msi"],
+      "icon": "static/resources/"
     }
   },
   "devDependencies": {
