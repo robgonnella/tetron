@@ -213,6 +213,7 @@ export default class TetrisEngine {
       hitSound.play();
       return this.renderNextPiece();
     }
+
     this.clearCurrentPiece();
     ++this.currentPiece.rowPos;
     this.renderCurrentPiece();
@@ -283,18 +284,15 @@ export default class TetrisEngine {
   }
 
   private readonly run = (): void => {
+    if (this.gameover) { return; }
     if (!this.playingAudio) {
       gameMusic.play();
       this.playingAudio = true;
     }
     this.renderCurrentPiece();
     this.loopTimeout = window.setTimeout(() => {
-      if (this.isGameOver()) {
-        this.stopGame();
-      } else {
-        this.moveDown(false);
-        this.run();
-      }
+      this.moveDown(false);
+      this.run();
     }, this.loopSpeed);
   }
 
@@ -352,6 +350,9 @@ export default class TetrisEngine {
     this.stats[this.currentPiece.type].stats++
     this.nextPiece = this.getRandomPiece();
     this.renderCurrentPiece();
+    if (this.isGameOver()) {
+      this.stopGame();
+    }
   }
 
   private readonly canRotate = (nextRotation: Rotation): boolean => {
@@ -416,7 +417,9 @@ export default class TetrisEngine {
     if (this.isAgainstWallOnRight()) { return false; }
     // check if it's blocked by another piece on the right
     for (let i = 0; i < height; ++i) {
-      if (isColor(this.board[rowPos + i][rightSide])) {
+      const blockToRight = isColor(this.board[rowPos + i][rightSide]);
+      const shapeFilledInRightPos = shape[i][xLen - 1] === 1;
+      if (blockToRight && shapeFilledInRightPos) {
         return false;
       }
     }
@@ -431,7 +434,9 @@ export default class TetrisEngine {
     if (this.isAgainstWallOnLeft()) { return false; }
     // check if it's blocked by another piece on the left
     for (let i = 0; i < height; ++i) {
-      if (isColor(this.board[rowPos + i][colPos - 1])) {
+      const blockToLeft = isColor(this.board[rowPos + i][colPos - 1]);
+      const shapeFilledInLeftPos = shape[i][0] === 1;
+      if (blockToLeft && shapeFilledInLeftPos) {
         return false;
       }
     }
