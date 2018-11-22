@@ -14,7 +14,8 @@ const TSLOADER = {
 module.exports = {
   entry: {
     tetronMain: path.join(APPDIR, 'main/main.ts'),
-    tetronRenderer: path.join(APPDIR, 'views/index.tsx')
+    tetronRenderer: path.join(APPDIR, 'views/index.tsx'),
+    tetrisWorker: path.join(APPDIR, 'tetris-worker.ts')
   },
   output: {
     path: BUILDDIR,

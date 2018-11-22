@@ -26,3 +26,26 @@ export interface StatsPiece {
 }
 
 export type Stats = Record<GamePiece['type'], StatsPiece>;
+
+export interface ITetrisEngine {
+  play(): void;
+  togglePause (): void;
+  setLevel(level: number): void;
+  moveDown(accelerated: boolean): void;
+  moveLeft(): void;
+  moveRight(): void;
+  rotateLeft(): void;
+  rotateRight(): void;
+}
+
+export enum TetrisEngineAction {
+  Play,
+  PlayAgain,
+  TogglePause,
+  SetLevel,
+  MoveDown,
+  MoveLeft,
+  MoveRight,
+  RotateLeft,
+  RotateRight
+}
