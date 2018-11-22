@@ -61,12 +61,12 @@ export default class WebtrisContainer extends React.Component<
     document.addEventListener('keydown', (evt) => {
       if (!this.boardCtx || !this.boardCanvas) { return; }
 
-      if (evt.key === 'Meta') {
-        this.tetrisEngine.rotateRight();
+      if (evt.key === 'a' || evt.key === 'A') {
+        this.tetrisEngine.rotateLeft();
       }
 
-      if (evt.key === 'Alt') {
-        this.tetrisEngine.rotateLeft();
+      if (evt.key === 's' || evt.key === 'S') {
+        this.tetrisEngine.rotateRight();
       }
 
       if (evt.key === 'ArrowLeft') {
