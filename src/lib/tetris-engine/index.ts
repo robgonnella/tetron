@@ -121,7 +121,6 @@ export default class TetrisEngine implements ITetrisEngine {
   private nextPiece: GamePiece;
   private loopSpeed: number = 1000;
   private loopTimeout?: NodeJS.Timer;
-  private playingAudio: boolean = false;
   private updateRenderer: ChangeCallback;
 
   static PlayAgain(
@@ -139,8 +138,7 @@ export default class TetrisEngine implements ITetrisEngine {
     this.stats[this.currentPiece.type].stats++
     this.nextPiece = this.getRandomPiece();
     this.setLevel(opts.level || 0);
-    const state = this.getState();
-    this.updateRenderer(state);
+    this.updateRenderer(this.getState());
   }
 
   public play = (): void => {
@@ -154,7 +152,6 @@ export default class TetrisEngine implements ITetrisEngine {
       clearTimeout(this.loopTimeout);
       this.loopTimeout = undefined
       this.paused = true;
-      this.playingAudio = false;
       // send out clean board on pause so users
       // can't pause and plan
       const data = this.getState();
@@ -162,7 +159,6 @@ export default class TetrisEngine implements ITetrisEngine {
       this.updateRenderer(data);
     } else {
       this.paused = false;
-      this.playingAudio = true;
       this.run();
     }
   }
@@ -179,17 +175,10 @@ export default class TetrisEngine implements ITetrisEngine {
   }
 
   public readonly moveDown = (accelerated = true): void => {
-    if (this.paused) { return; }
-    if (this.gameover) { return; }
-    if (!this.gameInProgress) { return; }
-
     if (this.isHit()) {
       return this.renderNextPiece();
     }
-
-    this.clearCurrentPiece();
-    ++this.currentPiece.rowPos;
-    this.renderCurrentPiece();
+    this.modifyCurrentPiece('move-down');
     if (accelerated) {
       const shape = this.currentPiece.shape[this.currentPiece.rotation];
       const height = shape.length;
@@ -199,59 +188,19 @@ export default class TetrisEngine implements ITetrisEngine {
   }
 
   public readonly moveLeft = () => {
-    if (this.paused) { return; }
-    if (this.gameover) { return; }
-    if (!this.gameInProgress) { return; }
-
-    if (!this.canMoveLeft()) { return; }
-    if (this.isAgainstWallOnLeft()) { return; }
-    this.clearCurrentPiece();
-    --this.currentPiece.colPos;
-    this.renderCurrentPiece();
+    this.modifyCurrentPiece('move-left');
   }
 
   public readonly moveRight = () => {
-    if (this.paused) { return; }
-    if (this.gameover) { return; }
-    if (!this.gameInProgress) { return; }
-
-    if (!this.canMoveRight()) { return; }
-    if (this.isAgainstWallOnRight()) { return; }
-    this.clearCurrentPiece();
-    ++this.currentPiece.colPos
-    this.renderCurrentPiece();
+    this.modifyCurrentPiece('move-right');
   }
 
   public readonly rotateLeft = (): void => {
-    if (this.paused) { return; }
-    if (this.gameover) { return; }
-    if (!this.gameInProgress) { return; }
-
-    let wall: string = '';
-    if (this.isAgainstWallOnLeft()) { wall = 'left'; }
-    if (this.isAgainstWallOnRight()) { wall = 'right'; }
-    const nextRotation = this.getNextRotation('left');
-    if (!this.canRotate(nextRotation)) { return; }
-    this.clearCurrentPiece();
-    this.currentPiece.rotation = nextRotation;
-    this.pinToWall(wall);
-    this.renderCurrentPiece();
+    this.modifyCurrentPiece('rotate-right');
   }
 
   public readonly rotateRight = () => {
-    if (this.paused) { return; }
-    if (this.gameover) { return; }
-    if (!this.gameInProgress) { return; }
-
-    let wall: string = ''
-    if (this.isAgainstWallOnLeft()) { wall = 'left'; }
-    if (this.isAgainstWallOnRight()) { wall = 'right'; }
-    const nextRotation = this.getNextRotation('right');
-    if (!this.canRotate(nextRotation)) { return; }
-    this.clearCurrentPiece();
-    this.currentPiece.rotation = nextRotation;
-    this.pinToWall(wall);
-    this.renderCurrentPiece();
+    this.modifyCurrentPiece('rotate-right');
   }
 
   private readonly getState = (): TetrisState => {
@@ -270,9 +219,6 @@ export default class TetrisEngine implements ITetrisEngine {
 
   private readonly run = (): void => {
     if (this.gameover) { return; }
-    if (!this.playingAudio) {
-      this.playingAudio = true;
-    }
     this.renderCurrentPiece();
     const timeoutId: unknown = setTimeout(() => {
       this.moveDown(false);
@@ -295,11 +241,11 @@ export default class TetrisEngine implements ITetrisEngine {
   }
 
   private clearCurrentPiece = () => {
-    const board = this.board;
-    const piece = this.currentPiece;
+    const board = [...this.board];
+    const piece = {...this.currentPiece};
     const rowPos = piece.rowPos;
     const colPos = piece.colPos;
-    const shape = this.currentPiece.shape[this.currentPiece.rotation];
+    const shape = [...this.currentPiece.shape[this.currentPiece.rotation]];
     for (let row = 0; row < shape.length; ++row) {
       for (let col = 0; col < shape[0].length; ++col) {
         if (shape[row][col] !== 0) {
@@ -307,15 +253,16 @@ export default class TetrisEngine implements ITetrisEngine {
         }
       }
     }
+    this.board = board;
   }
 
   private readonly renderCurrentPiece = (): void => {
-    const board = this.board;
-    const piece = this.currentPiece;
+    const board = [ ...this.board ];
+    const piece = { ...this.currentPiece };
     const rowPos = piece.rowPos;
     const colPos = piece.colPos;
     const rotation = this.currentPiece.rotation
-    const shape = this.currentPiece.shape[rotation];
+    const shape = [ ...this.currentPiece.shape[rotation] ];
 
     for (let row = 0; row < shape.length; ++row) {
       for (let col = 0; col < shape[0].length; ++col) {
@@ -325,6 +272,7 @@ export default class TetrisEngine implements ITetrisEngine {
         board[row + rowPos][col + colPos] = value
       }
     }
+    this.board = board;
     this.updateRenderer(this.getState());
   }
 
@@ -338,27 +286,56 @@ export default class TetrisEngine implements ITetrisEngine {
     }
   }
 
+  private modifyCurrentPiece = (modification: string) => {
+    if (this.paused) { return; }
+    if (this.gameover) { return; }
+    if (!this.gameInProgress) { return; }
+
+    this.clearCurrentPiece();
+    switch(modification) {
+      case 'move-left':
+        if (this.canMoveLeft()) { this.currentPiece.colPos--; }
+        break;
+      case 'move-right':
+        if (this.canMoveRight()) { this.currentPiece.colPos++; }
+        break;
+      case 'move-down':
+        this.currentPiece.rowPos++;
+        break;
+      case 'rotate-left':
+      case 'rotate-right': {
+        const direction = modification.split('-')[1] as 'right' | 'left';
+        const nextRotation = this.getNextRotation(direction);
+        if (this.canRotate(nextRotation)) {
+          this.currentPiece.rotation = nextRotation;
+        }
+        break;
+      }
+      default:
+        break;
+    }
+    let wall: string = ''
+    if (this.isAgainstWallOnLeft()) { wall = 'left'; }
+    if (this.isAgainstWallOnRight()) { wall = 'right'; }
+    this.adjustForWall(wall);
+    this.renderCurrentPiece();
+  }
+
+  // make sure to clear current piece from board before calling this
+  // method or the rendering of the current piece will interfere.
   private readonly canRotate = (nextRotation: Rotation): boolean => {
-    let willRotate = true;
     const board = this.board;
     const currRowPos = this.currentPiece.rowPos;
     const nextShape = this.currentPiece.shape[nextRotation];
     const nextColPos = this.getColPosForRotation(nextRotation);
-
-    // clear the board of the current piece so it's own colors don't trigger
-    // false positive
-    this.clearCurrentPiece();
-    loop1:
     for (let i = 0; i < nextShape.length; ++i) {
       for (let j = 0; j < nextShape[0].length; ++j) {
-        if (isColor(board[currRowPos + i][nextColPos + j])) {
-          willRotate = false;
-          break loop1;
-        }
+        const boardSlotFilled = isColor(board[currRowPos + i][nextColPos + j]);
+        const pieceSlotFilled = nextShape[i][j] === 1;
+        if (boardSlotFilled && pieceSlotFilled) { return false; }
       }
     }
-    this.renderCurrentPiece();
-    return willRotate;
+    return true;
   }
 
   private readonly getNextRotation = (
@@ -381,9 +358,9 @@ export default class TetrisEngine implements ITetrisEngine {
 
   private readonly getColPosForRotation = (r: Rotation): number => {
     const shape = this.currentPiece.shape[r];
-    const xLen = shape[0].length;
-    if (this.isAgainstWallOnRight()) {
-      return this.board[0].length - xLen
+    const pieceWidth = shape[0].length;
+    if (this.isAgainstWallOnRight(r)) {
+      return this.board[0].length - pieceWidth
     }
     if (this.isAgainstWallOnLeft()) {
       return 0;
@@ -426,10 +403,10 @@ export default class TetrisEngine implements ITetrisEngine {
     return true;
   }
 
-  private readonly isAgainstWallOnRight = (): boolean => {
-    const xLen = (
-      this.currentPiece.shape[this.currentPiece.rotation][0].length
-    );
+  private readonly isAgainstWallOnRight = (
+    rotation: Rotation = this.currentPiece.rotation
+  ): boolean => {
+    const xLen = this.currentPiece.shape[rotation][0].length;
     const rightSide = this.currentPiece.colPos + xLen;
     return rightSide >= this.board[0].length;
   }
@@ -438,14 +415,14 @@ export default class TetrisEngine implements ITetrisEngine {
     return this.currentPiece.colPos <= 0;
   }
 
-  private pinToWall = (wall: string): void => {
+  private adjustForWall = (wall: string): void => {
     if (!wall) { return; }
     const shape = this.currentPiece.shape[this.currentPiece.rotation];
-    const xLen = shape[0].length;
+    const pieceWidth = shape[0].length;
 
     switch (wall) {
       case 'right':
-        this.currentPiece.colPos = this.board[0].length - xLen;
+        this.currentPiece.colPos = this.board[0].length - pieceWidth;
         break;
       case 'left':
         this.currentPiece.colPos = 0;
@@ -467,16 +444,12 @@ export default class TetrisEngine implements ITetrisEngine {
       clearTimeout(this.loopTimeout);
       this.loopTimeout = undefined;
     }
-    if (this.playingAudio) {
-      this.playingAudio = false;
-    }
     this.gameover = true;
     this.gameInProgress = false;
     this.updateRenderer(this.getState());
   }
 
   private readonly isHit = (): boolean => {
-    let hit = false;
     const piece = this.currentPiece;
     const rotation = piece.rotation;
     const shape = piece.shape[rotation];
