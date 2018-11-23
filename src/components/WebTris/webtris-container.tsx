@@ -7,6 +7,7 @@ import {
 
 interface WebtrisState {
   tetris: TetrisState;
+  firstLaunch: boolean;
   blockWidth: number;
   canvasWidth: number;
   canvasHeight: number;
@@ -57,6 +58,7 @@ export default class WebtrisContainer extends React.Component<
     this.tetrisWorker.onmessage = this.handleTetrisStateChange;
     this.state = {
       tetris: initialTetrisState,
+      firstLaunch: true,
       blockWidth: blockWidth,
       canvasWidth: Math.max(
         initialTetrisState.board[0].length * blockWidth,
@@ -131,6 +133,7 @@ export default class WebtrisContainer extends React.Component<
       blockWidth: this.state.blockWidth,
       canvasWidth: this.state.canvasWidth,
       canvasHeight: this.state.canvasHeight,
+      firstLaunch: this.state.firstLaunch,
       gameover: this.state.tetris.gameover,
       gameInProgress: this.state.tetris.gameInProgress,
       stats: this.state.tetris.stats,
@@ -178,6 +181,7 @@ export default class WebtrisContainer extends React.Component<
     this.tetrisWorker.postMessage(TetrisEngineAction.Play)
     this.drawStatsPieces();
     gameMusic.play();
+    this.setState({firstLaunch: false});
   }
 
   private playAgain = (): void => {

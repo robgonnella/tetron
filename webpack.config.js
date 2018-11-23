@@ -4,6 +4,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 
 const APPDIR = path.resolve('src');
+const TETRISLIBDIR = path.join(APPDIR, 'lib', 'tetris-engine');
 const BUILDDIR = path.resolve('build');
 
 const TSLOADER = {
@@ -15,7 +16,7 @@ module.exports = {
   entry: {
     tetronMain: path.join(APPDIR, 'main/main.ts'),
     tetronRenderer: path.join(APPDIR, 'views/index.tsx'),
-    tetrisWorker: path.join(APPDIR, 'tetris-worker.ts')
+    tetrisWorker: path.join(TETRISLIBDIR, 'tetris-worker.ts')
   },
   output: {
     path: BUILDDIR,

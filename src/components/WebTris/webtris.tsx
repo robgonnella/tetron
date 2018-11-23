@@ -146,6 +146,7 @@ const SelectLevel: React.StatelessComponent<SelectLevelProps> = (
 }
 
 interface PlayGameProps {
+  firstLaunch: boolean;
   finalLevel: number;
   finalScore: number;
   gameover: boolean;
@@ -168,6 +169,7 @@ const PlayGame: React.StatelessComponent<PlayGameProps> = (
       </div>
     ) :
     null;
+  const instructions = props.firstLaunch ? <Instructions /> : null;
   return (
     <div>
       {gameOverMessage}
@@ -178,7 +180,20 @@ const PlayGame: React.StatelessComponent<PlayGameProps> = (
       <button onClick={buttonAction}>
         {buttonTitle}
       </button>
+      { instructions }
     </div>
+  );
+}
+
+const Instructions: React.StatelessComponent<{}> = (
+): React.ReactElement<{}> => {
+  return (
+    <React.Fragment>
+      <p>Use arrow keys to move piece to left, right, and accelerate down</p>
+      <p>Press "a" to rotate piece to left</p>
+      <p>Press "s" to rotate piece to right</p>
+      <p>Press spacebar to pause game</p>
+    </React.Fragment>
   );
 }
 
@@ -199,7 +214,6 @@ const LevelAndScore: React.StatelessComponent<
   );
 }
 
-
 interface SideCarRightProps {
   width: number;
   height: number;
@@ -207,6 +221,7 @@ interface SideCarRightProps {
   nextShape: Array<number[]>;
   level: number;
   score: number;
+  firstLaunch: boolean;
   gameover: boolean;
   gameInProgress: boolean;
   selectedLevel: number;
@@ -220,6 +235,7 @@ const SideCarRight: React.StatelessComponent<SideCarRightProps> = (
   let content = props.gameInProgress ?
     <LevelAndScore level={props.level} score={props.score} /> :
     <PlayGame
+      firstLaunch={props.firstLaunch}
       gameover={props.gameover}
       finalScore={props.score}
       finalLevel={props.level}
@@ -229,7 +245,7 @@ const SideCarRight: React.StatelessComponent<SideCarRightProps> = (
       startGame={props.startGame}
     />;
   const nextPieceBorder = props.gameInProgress ? '5px solid grey' : '';
-  // always render canvas since we need consisten access to it
+  // always render canvas since we need consistent access to it
   return (
     <div
       style={{
@@ -297,6 +313,7 @@ interface WebtrisProps {
   blockWidth: number;
   canvasWidth: number;
   canvasHeight: number;
+  firstLaunch: boolean;
   stats: TetrisEngine['stats'];
   level: number;
   score: number;
@@ -343,6 +360,7 @@ export const Webtris: React.StatelessComponent<WebtrisProps> = (
         width={props.canvasWidth}
         height={props.canvasHeight}
         blockWidth={props.blockWidth}
+        firstLaunch={props.firstLaunch}
         nextShape={props.nextShape}
         level={props.level}
         score={props.score}

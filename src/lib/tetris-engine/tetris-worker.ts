@@ -1,6 +1,6 @@
 import TetrisEngine, {
   TetrisEngineAction,
-  TetrisState } from "./lib/tetris-engine";
+  TetrisState } from './index';
 
 function postNewState(state: TetrisState) {
   postMessage(state);
