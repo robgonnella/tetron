@@ -15,62 +15,67 @@ export interface TetrisState {
   stats: Stats;
 }
 
-const initailStats: Stats = {
-  T: {
-    type: 'T',
-    shape: T.shape['0'],
-    stats: 0,
-    color: T.color
-  },
-  L: {
-    type: 'L',
-    shape: L.shape['90'],
-    stats: 0,
-    color: L.color
-  },
-  RL: {
-    type: 'RL',
-    shape: RL.shape['90'],
-    stats: 0,
-    color: RL.color
-  },
-  Zig: {
-    type: 'Zig',
-    shape: Zig.shape['0'],
-    stats: 0,
-    color: Zig.color
-  },
-  Zag: {
-    type: 'Zag',
-    shape: Zag.shape['0'],
-    stats: 0,
-    color: Zag.color
-  },
-  Line: {
-    type: 'Line',
-    shape: Line.shape['90'],
-    stats: 0,
-    color: Line.color
-  },
-  Block: {
-    type: 'Block',
-    shape: Block.shape['0'],
-    stats: 0,
-    color: Block.color
-  }
-};
-
-export const initialState: TetrisState = {
-  board: generateCleanBoard(),
-  level: 0,
-  score: 0,
-  clearedLines: 0,
-  gameover: false,
-  gameInProgress: false,
-  nextShape: T.shape['0'],
-  nextColor: T.color,
-  stats: initailStats
+function getInitialStats(): Stats {
+  return {
+    T: {
+      type: 'T',
+      shape: T.shape['0'],
+      stats: 0,
+      color: T.color
+    },
+    L: {
+      type: 'L',
+      shape: L.shape['90'],
+      stats: 0,
+      color: L.color
+    },
+    RL: {
+      type: 'RL',
+      shape: RL.shape['90'],
+      stats: 0,
+      color: RL.color
+    },
+    Zig: {
+      type: 'Zig',
+      shape: Zig.shape['0'],
+      stats: 0,
+      color: Zig.color
+    },
+    Zag: {
+      type: 'Zag',
+      shape: Zag.shape['0'],
+      stats: 0,
+      color: Zag.color
+    },
+    Line: {
+      type: 'Line',
+      shape: Line.shape['90'],
+      stats: 0,
+      color: Line.color
+    },
+    Block: {
+      type: 'Block',
+      shape: Block.shape['0'],
+      stats: 0,
+      color: Block.color
+    }
+  };
 }
+
+export function getInitialState(): TetrisState {
+  return {
+    board: generateCleanBoard(),
+    level: 0,
+    score: 0,
+    clearedLines: 0,
+    gameover: false,
+    gameInProgress: false,
+    nextShape: T.shape['0'],
+    nextColor: T.color,
+    stats: getInitialStats()
+  }
+}
+
 
 type ChangeCallback = (b: TetrisState) => void;
 
@@ -115,7 +120,7 @@ export default class TetrisEngine implements ITetrisEngine {
   private paused: boolean = false;
   private gameover: boolean = false;
   private gameInProgress: boolean = false;
-  private stats: Stats = { ...initailStats };
+  private stats: Stats = getInitialStats();
   private levelUpIn: number = 10;
   private currentPiece: GamePiece;
   private nextPiece: GamePiece;

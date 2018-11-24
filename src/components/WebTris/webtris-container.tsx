@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Webtris } from './webtris';
 import {
-  initialState as initialTetrisState,
+  getInitialState as getInitialTetrisState,
   TetrisState,
   TetrisEngineAction } from '../../lib/tetris-engine';
 
@@ -17,6 +17,8 @@ interface WebtrisState {
 interface WebtrisProps {
   blockWidth?: number
 };
+
+const initialTetrisState = getInitialTetrisState();
 
 const gameMusic = new Audio();
 gameMusic.autoplay = false;
