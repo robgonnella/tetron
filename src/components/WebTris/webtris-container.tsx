@@ -77,6 +77,7 @@ export default class WebtrisContainer extends React.Component<
   }
 
   public componentDidMount() {
+    this.drawStatsPieces();
     this.boardCanvas = document.getElementById(
       'board-canvas'
     ) as HTMLCanvasElement;
@@ -165,7 +166,6 @@ export default class WebtrisContainer extends React.Component<
   }
 
   private handleTetrisStateChange = (e: MessageEvent): void => {
-    const statsDrawn = this.state.tetris.gameInProgress;
     if (e.data.clearedLines > this.state.tetris.clearedLines) {
       const diff = e.data.clearedLines - this.state.tetris.clearedLines;
       if (diff >= 4) {
@@ -187,9 +187,6 @@ export default class WebtrisContainer extends React.Component<
       hitSound.play();
     }
     this.setState({tetris: e.data});
-    if (!statsDrawn) {
-      this.drawStatsPieces();
-    }
   }
 
   private startGame = (): void => {
@@ -213,7 +210,6 @@ export default class WebtrisContainer extends React.Component<
 
   // expensive but only drawn once at start of game
   private readonly drawStatsPieces = (): void => {
-    if (!this.state.tetris.gameInProgress) { return; }
     const blockWidth = this.state.blockWidth;
     const w = blockWidth;
     const h = blockWidth;
@@ -226,15 +222,14 @@ export default class WebtrisContainer extends React.Component<
       const piece = this.state.tetris.stats[type];
       for (let i = 0; i < piece.shape.length; ++i) {
         for (let j = 0; j < piece.shape[0].length; ++j) {
-          if (piece.shape[i][j] !== 0) {
-            const y = (i * h);
-            const x = (j * w);
-            ctx.fillStyle = piece.color;
-            ctx.strokeStyle = 'black';
-            ctx.lineWidth = 2;
-            ctx.fillRect(x, y, w, h);
-            ctx.strokeRect(x, y, w, h);
-          }
+          if (piece.shape[i][j] === 0) { continue; }
+          const y = (i * h);
+          const x = (j * w);
+          ctx.fillStyle = piece.color;
+          ctx.strokeStyle = 'black';
+          ctx.lineWidth = 2;
+          ctx.fillRect(x, y, w, h);
+          ctx.strokeRect(x, y, w, h);
         }
       }
     }
@@ -257,15 +252,14 @@ export default class WebtrisContainer extends React.Component<
 
     for (let i = 0; i < piece.length; ++i) {
       for (let j = 0; j < piece[0].length; ++j) {
+        if (piece[i][j] === 0) { continue; }
         const x = (centerX + j) * this.state.blockWidth
         const y = (centerY + i) * this.state.blockWidth;
-        if (piece[i][j] !== 0) {
-          this.nextCtx.fillStyle = color;
-          this.nextCtx.strokeStyle = 'black';
-          this.nextCtx.lineWidth = 2;
-          this.nextCtx.fillRect(x, y, w, h);
-          this.nextCtx.strokeRect(x, y, w, h);
-        }
+        this.nextCtx.fillStyle = color;
+        this.nextCtx.strokeStyle = 'black';
+        this.nextCtx.lineWidth = 2;
+        this.nextCtx.fillRect(x, y, w, h);
+        this.nextCtx.strokeRect(x, y, w, h);
       }
     }
   }
@@ -280,17 +274,16 @@ export default class WebtrisContainer extends React.Component<
     const board = this.state.tetris.board;
     for (let i = 0; i < board.length; ++i) {
       for (let j = 0; j < board[0].length; ++j) {
+        if (board[i][j] === 0) { continue; }
         const x = j * this.state.blockWidth
         const y = i * this.state.blockWidth;
         const w = this.state.blockWidth;
         const h = this.state.blockWidth;
-        if (board[i][j] !== 0) {
-          this.boardCtx.fillStyle = board[i][j] as string;
-          this.boardCtx.strokeStyle = 'black';
-          this.boardCtx.lineWidth = 2;
-          this.boardCtx.fillRect(x, y, w, h);
-          this.boardCtx.strokeRect(x, y, w, h);
-        }
+        this.boardCtx.fillStyle = board[i][j] as string;
+        this.boardCtx.strokeStyle = 'black';
+        this.boardCtx.lineWidth = 2;
+        this.boardCtx.fillRect(x, y, w, h);
+        this.boardCtx.strokeRect(x, y, w, h);
       }
     }
   }
