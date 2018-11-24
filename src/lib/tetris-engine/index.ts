@@ -270,10 +270,9 @@ export default class TetrisEngine implements ITetrisEngine {
 
     for (let row = 0; row < shape.length; ++row) {
       for (let col = 0; col < shape[0].length; ++col) {
-        const value = shape[row][col] ?
-          piece.color :
-          board[row + rowPos][col + colPos];
-        board[row + rowPos][col + colPos] = value
+        if (shape[row][col] === 1) {
+          board[row + rowPos][col + colPos] = piece.color
+        }
       }
     }
     this.board = board;

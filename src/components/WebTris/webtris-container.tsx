@@ -7,6 +7,7 @@ import {
 
 interface WebtrisState {
   tetris: TetrisState;
+  isPaused: boolean;
   firstLaunch: boolean;
   blockWidth: number;
   canvasWidth: number;
@@ -60,6 +61,7 @@ export default class WebtrisContainer extends React.Component<
     this.tetrisWorker.onmessage = this.handleTetrisStateChange;
     this.state = {
       tetris: initialTetrisState,
+      isPaused: false,
       firstLaunch: true,
       blockWidth: blockWidth,
       canvasWidth: Math.max(
@@ -114,6 +116,7 @@ export default class WebtrisContainer extends React.Component<
 
       if (evt.key === ' ') {
         this.tetrisWorker.postMessage(TetrisEngineAction.TogglePause)
+        this.toggleGameAudio();
       }
 
     });
@@ -149,6 +152,16 @@ export default class WebtrisContainer extends React.Component<
       selectedLevel: this.state.selectedLevel
     }
     return <Webtris {...props} />;
+  }
+
+  private toggleGameAudio = (): void => {
+    const isPaused = !this.state.isPaused;
+    if (isPaused) {
+      gameMusic.pause()
+    } else {
+      gameMusic.play();
+    }
+    this.setState({isPaused});
   }
 
   private handleTetrisStateChange = (e: MessageEvent): void => {
