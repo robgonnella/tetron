@@ -87,7 +87,6 @@ function generateCleanBoard(): Board {
   return board;
 }
 
-const cleanBoard = generateCleanBoard();
 const rotations: Rotation[] = [0, 90, 180, 270];
 const colors: Color[] = [
   'red',
@@ -160,7 +159,7 @@ export default class TetrisEngine implements ITetrisEngine {
       // send out clean board on pause so users
       // can't pause and plan
       const data = this.getState();
-      data.board = cleanBoard;
+      data.board = generateCleanBoard();
       this.updateRenderer(data);
     } else {
       this.paused = false;
@@ -174,7 +173,7 @@ export default class TetrisEngine implements ITetrisEngine {
     if (level === 0) {
       this.loopSpeed = 1000;
     } else {
-      this.loopSpeed *= Math.pow(.75, level) || 1000;
+      this.loopSpeed *= Math.pow(.75, level);
     }
     this.levelUpIn = Math.min(100, (10 * this.level + 10));
   }
@@ -201,7 +200,7 @@ export default class TetrisEngine implements ITetrisEngine {
   }
 
   public readonly rotateLeft = (): void => {
-    this.modifyCurrentPiece('rotate-right');
+    this.modifyCurrentPiece('rotate-left');
   }
 
   public readonly rotateRight = () => {
