@@ -8,7 +8,6 @@ let mainWindow: BrowserWindow | undefined;
 const mainView = path.join(__dirname, 'index.html');
 
 function createWindow (): void {
-  const workarea: Electron.Rectangle = screen.getPrimaryDisplay().workArea;
   // Create the browser window.
   mainWindow = new BrowserWindow({
     width: 800,

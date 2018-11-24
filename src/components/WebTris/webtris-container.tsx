@@ -55,7 +55,7 @@ export default class WebtrisContainer extends React.Component<
   private nextCtx?: CanvasRenderingContext2D;
   private tetrisWorker: Worker = new Worker('tetrisWorker.js');
 
-  constructor(props: {}) {
+  constructor(props: WebtrisProps) {
     super(props);
     const blockWidth = this.props.blockWidth || 10;
     this.tetrisWorker.onmessage = this.handleTetrisStateChange;
@@ -121,8 +121,6 @@ export default class WebtrisContainer extends React.Component<
       }
 
     });
-
-    this.drawStatsPieces();
   }
 
   componentDidUpdate(prevProps: {}, prevState: WebtrisState) {
@@ -208,7 +206,7 @@ export default class WebtrisContainer extends React.Component<
     this.setState({selectedLevel: level});
   }
 
-  // expensive but only drawn once at start of game
+  // expensive but only drawn once on page load
   private readonly drawStatsPieces = (): void => {
     const blockWidth = this.state.blockWidth;
     const w = blockWidth;
