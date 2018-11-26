@@ -5,8 +5,8 @@
   "author": "Rob Gonnella",
   "main": "build/tetronMain.js",
   "scripts": {
-    "build": "rimraf build && mkdir -p build && cp -R ./static/* build/ && webpack",
-    "build:debug": "rimraf build && mkdir -p build && cp -R ./static/* build/ && NODE_ENV=development webpack",
+    "build": "rimraf build && webpack && cp -R static/* build",
+    "build:debug": "NODE_ENV=development npm run build",
     "start": "electron build/tetronMain.js",
     "pack": "electron-builder"
   },
@@ -20,10 +20,14 @@
     "mac": {
       "category": "public.app-category.games",
       "icon": "tetris-icon2.icns",
-      "target": ["pkg"]
+      "target": [
+        "pkg"
+      ]
     },
     "win": {
-      "target": ["msi"],
+      "target": [
+        "msi"
+      ],
       "icon": "static/resources/"
     }
   },
@@ -41,6 +45,7 @@
     "typescript": "^3.1.1",
     "webpack": "^4.20.2",
     "webpack-cli": "^3.1.2",
-    "webpack-dev-server": "^3.1.9"
+    "webpack-dev-server": "^3.1.9",
+    "webtris": "git+https://github.com/robgonnella/webtris.git"
   }
 }

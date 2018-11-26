@@ -15,8 +15,7 @@ const TSLOADER = {
 module.exports = {
   entry: {
     tetronMain: path.join(APPDIR, 'main/main.ts'),
-    tetronRenderer: path.join(APPDIR, 'views/index.tsx'),
-    tetrisWorker: path.join(TETRISLIBDIR, 'tetris-worker.ts')
+    tetronRenderer: path.join(APPDIR, 'renderer/index.tsx')
   },
   output: {
     path: BUILDDIR,
@@ -32,7 +31,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: path.join(APPDIR, 'views/index.html'),
+      template: path.join(APPDIR, 'renderer/index.html'),
       chunks: ['tetronRenderer']
     })
   ],
