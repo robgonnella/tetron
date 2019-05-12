@@ -1,9 +1,9 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import Webtris, { WebtrisProps } from 'webtris';
+import { WebTris, WebTrisProps } from 'webtris';
 
 
-const props: WebtrisProps = {
+const props: WebTrisProps = {
   tetrisThemeSrc: 'audio/tetris-theme.m4a',
   rotateAudioSrc: 'audio/block-rotate.mp3',
   lineRemovalAudioSrc: 'audio/line-remove.mp3',
@@ -14,6 +14,6 @@ const props: WebtrisProps = {
 };
 
 ReactDOM.render(
-  <Webtris { ...props }/>,
+  <WebTris { ...props }/>,
   document.getElementById('mount-point')
 );
