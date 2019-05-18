@@ -5219,7 +5219,7 @@ websocket-extensions@>=0.1.1:
 
 "webtris@https://github.com/robgonnella/webtris.git":
   version "1.0.0"
-  resolved "https://github.com/robgonnella/webtris.git#b9f8e8c3abdb41fb473220a564f70eb6ecd8de79"
+  resolved "https://github.com/robgonnella/webtris.git#3b8a7a61a7924f00c6f9d50754585ee2005b83ec"
 
 which-module@^2.0.0:
   version "2.0.0"
