@@ -23,6 +23,6 @@ NODE_ENV=development yarn build && yarn start
 
 ### Gameplay
 
-- Use "a" and "s" on the keyboard to rotate pieces left and right respectively
+- Use Ctrl key to rotate left, and Meta key to rotate right
 - Use arrow keys to move pieces to right and left, and to accelerate downward movement
-- Use spacebar to pause game
+- Use escape key to pause game
