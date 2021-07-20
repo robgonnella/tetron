@@ -4,6 +4,12 @@ import { WebTris, WebTrisProps } from 'webtris';
 
 
 const props: WebTrisProps = {
+  rotateLeftKey: 'Control',
+  rotateRightKey: 'Meta',
+  moveLeftKey: 'ArrowLeft',
+  moveRightKey: 'ArrowRight',
+  moveDownKey: 'ArrowDown',
+  pauseKey: 'Escape',
   tetrisThemeSrc: 'audio/tetris-theme.m4a',
   rotateAudioSrc: 'audio/block-rotate.mp3',
   lineRemovalAudioSrc: 'audio/line-remove.mp3',

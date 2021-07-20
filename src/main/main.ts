@@ -10,10 +10,10 @@ const mainView = path.join(__dirname, 'index.html');
 function createWindow (): void {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 1000,
+    height: 800,
     useContentSize: true,
-    resizable: false
+    resizable: true
   });
 
   // and load the index.html of the app.
