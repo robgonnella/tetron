@@ -31,6 +31,11 @@
       "icon": "static/resources/"
     }
   },
+  "dependencies": {
+    "react": "^16.5.2",
+    "react-dom": "^16.5.2",
+    "webtris": "https://github.com/robgonnella/webtris.git"
+  },
   "devDependencies": {
     "@types/node": "^10.11.4",
     "@types/react": "^16.4.16",
@@ -38,14 +43,11 @@
     "electron": "^3.0.3",
     "electron-builder": "^20.28.4",
     "html-webpack-plugin": "^3.2.0",
-    "react": "^16.5.2",
-    "react-dom": "^16.5.2",
     "rimraf": "^2.6.2",
     "ts-loader": "^5.2.1",
     "typescript": "^3.1.1",
     "webpack": "^4.20.2",
     "webpack-cli": "^3.1.2",
-    "webpack-dev-server": "^3.1.9",
-    "webtris": "https://github.com/robgonnella/webtris.git"
+    "webpack-dev-server": "^3.1.9"
   }
 }
